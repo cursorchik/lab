@@ -1,0 +1,13 @@
+div.modal {
+    position: absolute; padding: 16px; top: 0; bottom: 0; z-index: 2;
+
+    background-color: white; min-width: 300px;
+
+    form.filters {
+        display: grid; height: 100%;
+        grid-template-rows: auto 1fr auto;
+        box-sizing: border-box;
+    }
+
+    div.filters_content { overflow: auto; scrollbar-width: none; padding: 0 .25rem; }
+}
