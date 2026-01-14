@@ -1,9 +1,0 @@
-ul.sub_link {
-    background-repeat: no-repeat; background-size: 16px;
-    background-position-y: 7px; background-position-x: right;
-    background-image: url("/resources/css/icons/arrow_triangle.svg");
-    &:has(> ul) { background-image: url("/resources/css/icons/arrow_triangle_up.svg"); }
-    ul {
-        display: flex; flex-direction: column; padding: 0 0 0 4px;
-    }
-}
