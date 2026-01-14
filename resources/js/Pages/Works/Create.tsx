@@ -17,7 +17,7 @@ export default function Create(props: WorksProps)
     const [selectedOption, setSelectedOption] = useState(null);
 
     return (<WorkLayout title="Список работ / Создание">
-        { props.prev_url && <Link href={props.prev_url ?? '/'}>Назад</Link> }
+        <Link href="/" className="btn btn-link">Назад</Link>
         <Form className="mt-1" action="/works/store" method="post">
             <div className="flex flex-col justify-center min-w-60 max-w-screen-md">
                 <div className="mb-3">

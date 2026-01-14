@@ -11,7 +11,7 @@ export default function Create(props: MechanicsProps)
     const { errors } = usePage().props;
 
     return (<WorkLayout title="Список техников / Создание">
-        { props.prev_url && <Link href={props.prev_url ?? '/'}>Назад</Link> }
+        <Link href="/mechanics" className="btn btn-link">Назад</Link>
         <Form className="mt-4" action="/mechanics/store" method="post">
             <div className="flex flex-col justify-center min-w-60 max-w-screen-md">
                 <div className="mb-3">

@@ -122,7 +122,7 @@ export default function Preview(props: WorksTypesProps)
     }
 
     return (<WorkLayout title="Список типов работ / Создание" flash={localFlash}>
-        { props.prev_url && <Link href={props.prev_url ?? '/'}>Назад</Link> }
+        <Link href="/works_types/create" className="btn btn-link">Назад</Link>
         <Form className="mt-4" action="/works_types/import" method="post">
             {errors.items && (<div>{errors.items}</div>)}
             <div className="flex flex-col justify-center min-w-60 max-w-screen-md">

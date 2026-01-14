@@ -12,7 +12,7 @@ export default function Update(props: ClinicsProps)
     const { errors } = usePage().props;
 
     return (<WorkLayout title="Список клиник / Изменение ">
-        { props.prev_url && <Link href="/clinics">Назад</Link> }
+        <Link href="/clinics" className="btn btn-link">Назад</Link>
         <Link onClick={(e) => { if (!confirm('Удалить клинику?')) { e.preventDefault(); } } } className="btn btn-link" title="Удалить" href={'/clinics/destroy/' + props.item.id}>Удалить</Link>
         <Form className="mt-4" action={ '/clinics/update/' + props.item.id } method="post">
             <div className="flex flex-col justify-center min-w-60 max-w-screen-md">

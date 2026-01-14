@@ -1,5 +1,6 @@
 import {Form, Link, usePage} from "@inertiajs/react";
 import WorkLayout from "@/Layouts/work/WorkLayout";
+import React from "react";
 
 type WorksTypesProps = {
     prev_url: string,
@@ -13,7 +14,7 @@ export default function Create(props: WorksTypesProps)
     const { errors } = usePage().props;
 
     return (<WorkLayout title="Список типов работ / Создание">
-        { props.prev_url && <Link href={props.prev_url ?? '/'} className="mr-2">Назад</Link> }
+        <Link href="/works_types" className="btn btn-link">Назад</Link>
         <Link href="/works_types/import_preview">Импорт</Link>
         <Form className="mt-4" action="/works_types/store" method="post">
             <div className="flex flex-col justify-center min-w-60 max-w-screen-md">
