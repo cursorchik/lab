@@ -32,6 +32,19 @@ use Database\Factories\WorkFactory;
  * @method static Builder<static>|Work whereStart($value)
  * @method static Builder<static>|Work whereState($value)
  * @method static Builder<static>|Work whereUpdatedAt($value)
+ * @property int $mid mechanicID
+ * @property int $cid clinicID
+ * @property int $wtid workTypeID
+ * @property string $patient
+ * @property int $cost
+ * @property-read \App\Models\Clinic|null $clinic
+ * @property-read \App\Models\Mechanic|null $mechanic
+ * @property-read \App\Models\WorkType|null $workType
+ * @method static Builder<static>|Work whereCid($value)
+ * @method static Builder<static>|Work whereCost($value)
+ * @method static Builder<static>|Work whereMid($value)
+ * @method static Builder<static>|Work wherePatient($value)
+ * @method static Builder<static>|Work whereWtid($value)
  * @mixin Eloquent
  */
 class Work extends Model

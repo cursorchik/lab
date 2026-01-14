@@ -22,7 +22,6 @@ export default function Browse(props: { prev_url: string, items: {id: number, na
                     <td>
                         <span className="flex gap-1 align-items-center justify-center">
                             <Link className="i edit" title="Редактировать" href={'/works_types/edit/' + item.id}></Link>
-                            <Link className="i delete" title="Удалить" href={'/works_types/destroy/' + item.id}></Link>
                         </span>
                     </td>
                 </tr>)

@@ -15,12 +15,5 @@ export default defineConfig({
         alias: {
             '@ico': path.resolve(__dirname, 'resources/css/icons'),
         },
-    },
-    // css: {
-    //     preprocessorOptions: {
-    //         scss: {
-    //             additionalData: `@import "resources/css/variables.scss";`
-    //         }
-    //     }
-    // },
+    }
 });

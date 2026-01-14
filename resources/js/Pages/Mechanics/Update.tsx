@@ -12,7 +12,8 @@ export default function Update(props: MechanicsProps)
     const { errors } = usePage().props;
 
     return (<WorkLayout title="Список техников / Изменение ">
-        { props.prev_url && <Link href={props.prev_url ?? '/'}>Назад</Link> }
+        { props.prev_url && <Link href="/mechanics">Назад</Link> }
+        <Link onClick={(e) => { if (!confirm('Удалить механика?')) { e.preventDefault(); } } } className="btn btn-link" title="Удалить" href={'/mechanics/destroy/' + props.item.id}>Удалить</Link>
         <Form className="mt-4" action={ '/mechanics/update/' + props.item.id } method="post">
             <div className="flex flex-col justify-center min-w-60 max-w-screen-md">
                 <div className="mb-3">

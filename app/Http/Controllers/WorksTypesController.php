@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\WorksTypesRequest;
 use App\Models\WorkType;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -33,24 +34,20 @@ class WorksTypesController extends Controller
      */
     public function import(Request $request) : RedirectResponse
     {
-//      dd($request->all());
-
         $validator = Validator::make($request->all(), [
             'form'          => 'required|array|min:1',
             'form.*.name'   => 'required|string|max:255',
-            'form.*.cost'   => 'required|numeric|min:0',
+            'form.*.cost'   => 'required|integer|min:1',
         ], [
             'form.required'         => 'Необходимо добавить хотя бы один элемент',
             'form.array'            => 'Данные должны быть массивом',
             'form.min'              => 'Необходимо добавить хотя бы один элемент',
-//            'form.*.name.required'  => 'Название работы обязательно для заполнения',
+            'form.*.name.required'  => 'Название работы обязательно для заполнения',
             'form.*.name.max'       => 'Название работы не должно превышать :max символов',
-//            'form.*.cost.required'  => 'Цена обязательна для заполнения',
-            'form.*.cost.numeric'   => 'Цена должна быть числом',
+            'form.*.cost.required'  => 'Цена обязательна для заполнения',
+            'form.*.cost.integer'   => 'Цена должна быть числом',
             'form.*.cost.min'       => 'Цена не может быть менее :min',
         ]);
-
-//        dd($validator->fails());
 
         if ($validator->fails()) {
             return back()
@@ -69,9 +66,9 @@ class WorksTypesController extends Controller
         return to_route('works_types.index');
     }
 
-    public function store(Request $request) : RedirectResponse
+    public function store(WorksTypesRequest $request) : RedirectResponse
     {
-        $validated = $request->validate(['name' => 'required|max:255', 'cost' => 'min:0']);
+        $validated = $request->validated();
 
         WorkType::create($validated);
 
@@ -84,10 +81,10 @@ class WorksTypesController extends Controller
         return Inertia::render('WorksTypes/Update', ['prev_url' => URL::previous(), 'item' => WorkType::whereId($id)->first()]);
     }
 
-    public function update(Request $request, string $id) : RedirectResponse
+    public function update(WorksTypesRequest $request, string $id) : RedirectResponse
     {
         WorkType::findOrFail($id);
-        $validated = $request->validate(['name' => 'required|max:255', 'cost' => 'min:0']);
+        $validated = $request->validated();
 
         WorkType::whereId($id)->update($validated);
 

@@ -125,7 +125,6 @@ export default function Browse(props: WorksProps)
                     <td>
                         <span className="flex gap-1 align-items-center justify-center">
                             <Link className="i edit" title="Редактировать" href={'/works/edit/' + item.id}></Link>
-                            <Link className="i delete" title="Удалить" href={'/works/destroy/' + item.id} preserveScroll></Link>
                         </span>
                     </td>
                 </tr>)

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\MechanicsRequest;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -79,9 +80,9 @@ class MechanicsController extends Controller
         return Inertia::render('Mechanics/Create', ['prev_url' => URL::previous()]);
     }
 
-    public function store(Request $request) : RedirectResponse
+    public function store(MechanicsRequest $request) : RedirectResponse
     {
-        $validated = $request->validate(['name' => 'required|max:255']);
+        $validated = $request->validated();
 
         Mechanic::create($validated);
 
@@ -94,10 +95,10 @@ class MechanicsController extends Controller
         return Inertia::render('Mechanics/Update', ['prev_url' => URL::previous(), 'item' => Mechanic::whereId($id)->first()]);
     }
 
-    public function update(Request $request, string $id) : RedirectResponse
+    public function update(MechanicsRequest $request, string $id) : RedirectResponse
     {
         Mechanic::findOrFail($id);
-        $validated = $request->validate(['name' => 'required|max:255']);
+        $validated = $request->validate();
 
         Mechanic::whereId($id)->update($validated);
 

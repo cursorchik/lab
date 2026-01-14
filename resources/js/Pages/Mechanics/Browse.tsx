@@ -61,7 +61,6 @@ export default function Browse(props: MechanicsProps)
                         <span className="flex gap-1 align-items-center justify-center">
                             { date && <Link type="link" className="i invoice" method="post" title="Выставить счёт" href={"/mechanics/invoice"} data={{id: item.id, date: date}} /> }
                             <Link className="i edit" title="Редактировать" href={'/mechanics/edit/' + item.id}></Link>
-                            <Link onClick={() => confirm('Удалить клинику?')} className="i delete" title="Удалить" href={'/mechanics/destroy/' + item.id}></Link>
                         </span>
                     </td>
                 </tr>)

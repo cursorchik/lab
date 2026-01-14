@@ -29,7 +29,8 @@ export default function Update(props: WorksProps)
     const { errors, flash } = usePage().props;
 
     return (<WorkLayout title="Список работ / Изменение" flash={flash}>
-        { props.prev_url && <Link href={props.prev_url ?? '/'}>Назад</Link> }
+        { props.prev_url && <Link href="/works">Назад</Link> }
+        <Link onClick={(e) => { if (!confirm('Удалить работу?')) { e.preventDefault(); } } } className="btn btn-link" title="Удалить" href={'/works/destroy/' + props.data.item.id} preserveScroll>Удалить</Link>
         <Form disableWhileProcessing className="mt-4" action={ '/works/update/' + props.data.item.id } method="post">
             <div className="flex flex-col justify-center min-w-60 max-w-screen-md">
                 <div className="mb-3">

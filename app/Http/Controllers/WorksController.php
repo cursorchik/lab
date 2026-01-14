@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\WorksRequest;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -87,21 +88,11 @@ class WorksController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(WorksRequest $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'start' => 'date',
-            'end' => 'date',
-            'count' => 'integer|min:0',
-            'patient' => 'string|max:512',
-            'cid' => 'integer|min:0',
-            'mid' => 'integer|min:0',
-            'wtid' => 'integer|min:0',
-            'comment' => 'string|max:512|nullable',
-        ]);
+        $validated = $request->validated();
 
         $data = $request->all();
-//        dd($data);
         if (!Clinic::find((int)$data['cid'], 'id')) return back()->with('error', 'Неверный ID клиники!')->withInput();
         if (!Mechanic::find((int)$data['mid'], 'id')) return back()->with('error', 'Неверный ID техника!')->withInput();
         if (!WorkType::find((int)$data['wtid'], 'id')) return back()->with('error', 'Неверный ID типа работы!')->withInput();
@@ -135,21 +126,11 @@ class WorksController extends Controller
         ]);
     }
 
-    public function update(Request $request, string $id): RedirectResponse
+    public function update(WorksRequest $request, string $id): RedirectResponse
     {
         Work::findOrFail($id);
 
-        $validated = $request->validate([
-            'start' => 'date|required',
-            'end' => 'date|required',
-            'count' => 'integer|min:0|required',
-            'state' => 'integer|min:0|max:3|required',
-            'patient' => 'string|max:512|required',
-            'cid' => 'integer|min:0|required',
-            'mid' => 'integer|min:0|required',
-            'wtid' => 'integer|min:0|required',
-            'comment' => 'string|max:512|nullable',
-        ]);
+        $validated = $request->validated();
 
         if (!Clinic::find($validated['cid'], 'id')) return back()->with('error', 'Неверный ID клиники!')->withInput();
         if (!Mechanic::find($validated['mid'], 'id')) return back()->with('error', 'Неверный ID техника!')->withInput();

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ClinicsRequest;
 use App\Models\Clinic;
 use App\Traits\Filters;
 
@@ -77,9 +78,9 @@ class ClinicsController extends Controller
         return Inertia::render('Clinics/Create', ['prev_url' => URL::previous()]);
     }
 
-    public function store(Request $request) : RedirectResponse
+    public function store(ClinicsRequest $request) : RedirectResponse
     {
-        $validated = $request->validate(['name' => 'required|max:255']);
+        $validated = $request->validated();
 
         Clinic::create($validated);
 
@@ -92,10 +93,10 @@ class ClinicsController extends Controller
         return Inertia::render('Clinics/Update', ['prev_url' => URL::previous(), 'item' => Clinic::whereId($id)->first()]);
     }
 
-    public function update(Request $request, string $id) : RedirectResponse
+    public function update(ClinicsRequest $request, string $id) : RedirectResponse
     {
         Clinic::findOrFail($id);
-        $validated = $request->validate(['name' => 'required|max:255']);
+        $validated = $request->validated();
 
         Clinic::whereId($id)->update($validated);
 
