@@ -13,10 +13,10 @@ div.layout {
     height: 100%; width: 100%; box-sizing: border-box;
 
     display: grid;
-    grid-template-areas: "header header"
+    grid-template-areas: /*"header header"*/
                          "sidebar content";
 
-    grid-template-rows: 40px 1fr;
+    grid-template-rows: /*40px */1fr;
     grid-template-columns: 200px 1fr;
 
     > div.header {
@@ -44,6 +44,9 @@ div.layout {
     }
 
     @media print {
+
+        @page { margin: 0; }
+
         display: grid;
         grid-template-areas: "header header"
                              "content content";

@@ -97,7 +97,6 @@ export default function Browse(props: WorksProps)
                 </div>
             </Form>
         </Modal> }
-        { props.items.length > 0 && props.filters.date && <Link className="btn btn-link" href={'/clinics/accounting/' + props.filters.date.split('-').join('/') }>Выставить счёт</Link> }
         <table className="table">
             <thead>
                 <tr>

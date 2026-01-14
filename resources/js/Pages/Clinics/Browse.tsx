@@ -59,7 +59,7 @@ export default function Browse(browseProps: BrowseProps)
                     <td>{item.salary ?? 0}</td>
                     <td>
                         <span className="flex gap-1 align-items-center justify-center">
-                            { date && <Link type="link" className="i invoice" method="post" title="Выставить счёт" href="/clinics/invoice/" data={{id: item.id, date: date}} /> }
+                            { date && <Link type="link" className="i invoice" method="post" title="Выставить счёт" href="/clinics/invoice" data={{id: item.id, date: date}} /> }
                             <Link className="i edit" title="Редактировать" href={'/clinics/edit/' + item.id}></Link>
                             <Link onClick={() => confirm('Удалить клинику?')} className="i delete" title="Удалить" href={'/clinics/destroy/' + item.id}></Link>
                         </span>

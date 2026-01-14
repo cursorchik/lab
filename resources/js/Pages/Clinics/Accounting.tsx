@@ -7,7 +7,7 @@ type Props = {
     url         : string,
     date        : string,
     name        : number,
-    items       : { start: string, patient: string, work: string, cost: number, count: number, salary: number }[],
+    items       : { start: string, patient: string, name: string, cost: number, count: number, salary: number }[],
 }
 export default function Accounting(props: Props)
 {
@@ -39,8 +39,6 @@ export default function Accounting(props: Props)
 
     ];
 
-    console.log(props);
-
     return (<WorkLayout title={'Список клиник / Выставление счёта за ' + m[date.getMonth()] + ' ' + date.getFullYear() + ' клиника ' + props.name + ' '}>
         <Link className="btn btn-link" method="post" href={'/clinics'} data={{
             filters: {
@@ -68,7 +66,7 @@ export default function Accounting(props: Props)
                 props?.items?.map((item, index) => <tr key={index}>
                     <td>{item.start}</td>
                     <td>{item.patient}</td>
-                    <td>{item.work}</td>
+                    <td>{item.name}</td>
                     <td>{item.cost}</td>
                     <td>{item.count}</td>
                     <td>{item.salary}</td>

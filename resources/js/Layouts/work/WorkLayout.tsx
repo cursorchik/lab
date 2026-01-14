@@ -14,7 +14,7 @@ export default function WorkLayout({title, flash, children}: WorkLayoutProps)
     return (<>
         <Head title={title}></Head>
         <div className={styles.layout}>
-            <div className={styles.header}></div>
+            {/*<div className={styles.header}></div>*/}
             <div className={styles.sidebar}>
                 <Link href="/">Главная</Link>
                 <Link href="/clinics">Список клиник</Link>
