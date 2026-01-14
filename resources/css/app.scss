@@ -1,0 +1,21 @@
+/*@tailwind base;*/
+/*@tailwind components;*/
+@tailwind utilities;
+
+a.i, button.i {
+    outline: none; border: none; background-color: transparent;
+
+    display: inline-block; width: 24px; height: 24px;
+    background-repeat: no-repeat; background-size: 24px; background-position: center;
+
+    &.edit { background-image: url("/resources/css/icons/edit.svg"); }
+    &.delete { background-image: url("/resources/css/icons/delete.svg"); }
+    &.invoice { background-image: url("/resources/css/icons/invoice_border.svg"); background-size: 28px; }
+}
+
+div#modal {
+    &:not(:empty) {
+        position: fixed; top: 0; right: 0; bottom: 0; left: 0;
+        z-index: 1; background-color: #00000094;
+    }
+}
