@@ -1,6 +1,7 @@
 import {Form, Link, usePage} from "@inertiajs/react";
 import WorkLayout from "@/Layouts/work/WorkLayout";
 import React from "react";
+import ErrorHint from '@/Components/custom/Error'
 
 type MechanicsProps = {
     prev_url: string
@@ -19,7 +20,7 @@ export default function Update(props: MechanicsProps)
                 <div className="mb-3">
                     <label htmlFor="name" className="form-label">Название</label>
                     <textarea className="form-control" name="name" id="name" defaultValue={props.item.name}/>
-                    {errors.name && (<div>{errors.name}</div>)}
+					<ErrorHint text={errors.name}/>
                 </div>
 
                 <button className="btn btn-primary" type="submit">Применить</button>

@@ -10,155 +10,189 @@ use App\Traits\Filters;
 use App\Models\Mechanic;
 
 use Illuminate\Database\Query\Builder;
-
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
+use JetBrains\PhpStorm\ArrayShape;
 
 class MechanicsController extends Controller
 {
-    use Filters;
+	use Filters;
 
-    protected function defaultFilters(): array
-    {
-        return [
-            'date' => date('Y-m-d'),
-        ];
-    }
+	protected function defaultFilters(): array
+	{
+		return [
+			'date' => date('Y-m-d'),
+		];
+	}
 
-    #[ArrayShape([
-        'builder' => Builder::class,
-        'filters' => [
-            'date' => 'string',
-        ],
-    ])]
-    public function collectBuilderIndex(array $filters) : array
-    {
-        $date = $filters['date'] ?? $this->defaultFilters()['date'];
-        $condition = ['`mid`=`mechanics`.`id`'];
-        if ($date)
-        {
-            $startDate = date('Y-m', strtotime($date)) . '-01';
-            $endDate = date("Y-m-t", strtotime($startDate)); // последний день месяца
-            $condition[] = "`start` BETWEEN '$startDate' AND '$endDate 23:59:59'";
-        }
+	private function getStartDate(string $date): string
+	{
+		return date('Y-m', strtotime($date)) . '-01';
+	}
 
-        $condition = implode(' AND ', $condition);
-        return [
-            'builder' => DB::table('mechanics')->select(DB::raw("*, (SELECT SUM(`cost` * `count`) FROM `works` WHERE {$condition}) as `salary`")),
-            'filters' => $filters,
-        ];
-    }
+	private function getEndDate(string $date): string
+	{
+		$startDate = $this->getStartDate($date);
+		return date('Y-m-t 23:59:59', strtotime($startDate));
+	}
 
-    public function indexData(Request $request) : JsonResponse
-    {
-        $data = $this->collectBuilderIndex($request->all()['filters'] ?? []);
+	#[ArrayShape([
+		'builder' => Builder::class,
+		'filters' => [
+			'date' => 'string',
+		],
+	])]
+	public function collectBuilderIndex(array $filters): array
+	{
+		$date = $filters['date'] ?? $this->defaultFilters()['date'];
+		$startDate = $this->getStartDate($date);
+		$endDate = $this->getEndDate($date);
 
-        return response()->json([
-            'items' => $data['builder']->get()
-        ]);
-    }
+		$query = DB::table('mechanics')
+			->select('mechanics.*')
+			->selectSub(function ($sub) use ($startDate, $endDate) {
+				$sub->from('works')
+					->join('work_work_type', 'works.id', '=', 'work_work_type.work_id')
+					->join('work_types', 'work_work_type.work_type_id', '=', 'work_types.id')
+					->whereRaw('`works`.`mid` = `mechanics`.`id`')
+					->whereBetween('works.start', [$startDate, $endDate])
+					->selectRaw('SUM(`work_types`.`cost` * `work_work_type`.`count`)');
+			}, 'salary');
 
-    public function index(Request $request): Response
-    {
-        $data = $this->collectBuilderIndex($this->getFilters($request));
+		return [
+			'builder' => $query,
+			'filters' => $filters,
+		];
+	}
 
-        return Inertia::render('Mechanics/Browse', [
-            'items' => $data['builder']->get(),
-            'default_filters' => $this->defaultFilters(),
-            'filters' => [
-                'date' => $data['filters']['date'] ?? null,
-            ],
-        ]);
-    }
+	public function indexData(Request $request): JsonResponse
+	{
+		$data = $this->collectBuilderIndex($request->all()['filters'] ?? []);
 
-    public function create(): Response
-    {
-        return Inertia::render('Mechanics/Create', ['prev_url' => URL::previous()]);
-    }
+		return response()->json([
+			'items' => $data['builder']->get()
+		]);
+	}
 
-    public function store(MechanicsRequest $request) : RedirectResponse
-    {
-        $validated = $request->validated();
+	public function index(Request $request): Response
+	{
+		$data = $this->collectBuilderIndex($this->getFilters($request));
 
-        Mechanic::create($validated);
+		return Inertia::render('Mechanics/Browse', [
+			'items' => $data['builder']->get(),
+			'default_filters' => $this->defaultFilters(),
+			'filters' => [
+				'date' => $data['filters']['date'] ?? null,
+			],
+		]);
+	}
 
-        return to_route('mechanics.index');
-    }
+	public function create(): Response
+	{
+		return Inertia::render('Mechanics/Create', ['prev_url' => URL::previous()]);
+	}
 
-    public function edit(string $id): Response
-    {
-        Mechanic::findOrFail($id);
-        return Inertia::render('Mechanics/Update', ['prev_url' => URL::previous(), 'item' => Mechanic::whereId($id)->first()]);
-    }
+	public function store(MechanicsRequest $request): RedirectResponse
+	{
+		$validated = $request->validated();
 
-    public function update(MechanicsRequest $request, string $id) : RedirectResponse
-    {
-        Mechanic::findOrFail($id);
-        $validated = $request->validate();
+		Mechanic::create($validated);
 
-        Mechanic::whereId($id)->update($validated);
+		return to_route('mechanics.index');
+	}
 
-        return to_route('mechanics.index');
-    }
+	public function edit(string $id): Response
+	{
+		Mechanic::findOrFail($id);
+		return Inertia::render('Mechanics/Update', ['prev_url' => URL::previous(), 'item' => Mechanic::whereId($id)->first()]);
+	}
 
-    public function destroy(string $id) : RedirectResponse
-    {
-        Mechanic::findOrFail($id);
-        Mechanic::destroy($id);
+	public function update(MechanicsRequest $request, string $id): RedirectResponse
+	{
+		Mechanic::findOrFail($id);
+		$validated = $request->validated();
 
-        return to_route('mechanics.index');
-    }
+		Mechanic::whereId($id)->update($validated);
 
-    public function invoice(Request $request) : Response
-    {
-        $validated = $request->validate([
-            'id' => 'required|integer',
-            'date' => 'required|date',
-        ]);
-        $data = Mechanic::findOrFail($validated['id']);
+		return to_route('mechanics.index');
+	}
 
-        $condition = ["`mid`={$validated['id']}"];
+	public function destroy(string $id): RedirectResponse
+	{
+		Mechanic::findOrFail($id);
+		Mechanic::destroy($id);
 
-        $startDate = date('Y-m', strtotime($validated['date'])) . '-01';
-        $endDate = date('Y-m-t', strtotime($startDate)); // последний день месяца
-        $condition[] = "`start` BETWEEN '$startDate' AND '$endDate 23:59:59'";
-        $where = implode(' AND ', $condition);
+		return to_route('mechanics.index');
+	}
 
-        $items = DB::table('works')->select(DB::raw("`patient`, (SELECT `name` FROM `work_types` WHERE `id`=`wtid`) as `name`, `cost`, `count`, (`count`*`cost`) as `salary`"))->whereRaw($where)->get();
+	public function invoice(Request $request): Response
+	{
+		$validated = $request->validate([
+			'id'   => 'required|integer',
+			'date' => 'required|date',
+		]);
 
-        return Inertia::render('Mechanics/Accounting', [
-            'id'        => $validated['id'],
-            'name'      => $data->name,
-            'date'      => $startDate,
-            'items'     => $items,
-        ]);
-    }
+		$mechanic = Mechanic::findOrFail($validated['id']);
 
-    public function invoiceGet(int $id, int $date) : Response
-    {
-        $data = Mechanic::findOrFail($id);
+		$startDate = $this->getStartDate($validated['date']);
+		$endDate   = $this->getEndDate($validated['date']);
 
-        $condition = ["`mid`={$id}"];
+		$items = DB::table('works')
+			->join('work_work_type', 'works.id', '=', 'work_work_type.work_id')
+			->join('work_types', 'work_work_type.work_type_id', '=', 'work_types.id')
+			->where('works.mid', $validated['id'])
+			->whereBetween('works.start', [$startDate, $endDate])
+			->select(
+				'works.patient',
+				'works.start',
+				'work_types.name',
+				'work_types.cost',
+				'work_work_type.count',
+				DB::raw('`work_types`.`cost` * `work_work_type`.`count` as salary')
+			)
+			->get();
 
-        [$y, $md] = mb_str_split($date, 4);
-        [$m, $d] = mb_str_split($md, 2);
+		return Inertia::render('Mechanics/Accounting', [
+			'id'    => $validated['id'],
+			'name'  => $mechanic->name,
+			'date'  => $startDate,
+			'items' => $items,
+		]);
+	}
 
-        $startDate = $y.'-'.$m.'-01';
-        $endDate = date('Y-m-t', strtotime($startDate)); // последний день месяца
-        $condition[] = "`start` BETWEEN '$startDate' AND '$endDate 23:59:59'";
-        $where = implode(' AND ', $condition);
+	public function invoiceGet(int $id, int $date): Response
+	{
+		$mechanic = Mechanic::findOrFail($id);
 
-        $items = DB::table('works')->select(DB::raw("`patient`, (SELECT `name` FROM `work_types` WHERE `id`=`wtid`) as `name`, `cost`, `count`, (`count`*`cost`) as `salary`"))->whereRaw($where)->get();
+		$y = substr($date, 0, 4);
+		$m = substr($date, 4, 2);
+		$startDate = $y . '-' . $m . '-01';
+		$endDate   = date('Y-m-t 23:59:59', strtotime($startDate));
 
-        return Inertia::render('Mechanics/Accounting', [
-            'id' => $id,
-            'name' => $data->name,
-            'date' => $startDate,
-            'items' => $items,
-        ]);
-    }
+		$items = DB::table('works')
+			->join('work_work_type', 'works.id', '=', 'work_work_type.work_id')
+			->join('work_types', 'work_work_type.work_type_id', '=', 'work_types.id')
+			->where('works.mid', $id)
+			->whereBetween('works.start', [$startDate, $endDate])
+			->select(
+				'works.patient',
+				'works.start',
+				'work_types.name',
+				'work_types.cost',
+				'work_work_type.count',
+				DB::raw('`work_types`.`cost` * `work_work_type`.`count` as salary')
+			)
+			->get();
+
+		return Inertia::render('Mechanics/Accounting', [
+			'id'    => $id,
+			'name'  => $mechanic->name,
+			'date'  => $startDate,
+			'items' => $items,
+		]);
+	}
 }

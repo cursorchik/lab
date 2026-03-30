@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\WorksRequest;
+use App\Interfaces\IWork;
+use App\Traits\Filters;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -12,8 +14,10 @@ use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\URL;
 
-class WorksController extends Controller
+class WorksController extends Controller implements IWork
 {
+	use Filters;
+
     protected function defaultFilters(): array
     {
         return [
@@ -30,55 +34,55 @@ class WorksController extends Controller
         ];
     }
 
-    public function index(Request $request): Response
-    {
-        $work_builder = Work::with(['workType', 'clinic', 'mechanic']);
+	public function index(Request $request) : Response
+	{
+		$work_builder = Work::with(['workTypes', 'clinic', 'mechanic']);
 
-        $date = null;
-        $patient = null;
-        $mid = 0;
-        $cid = 0;
+		$date = $request->get('date');
+		if ($date)
+		{
+			$startDate = date('Y-m', strtotime($date)) . '-01';
+			$endDate = date("Y-m-t", strtotime($startDate));
+			$work_builder->whereBetween('start', [$startDate, $endDate . ' 23:59:59']);
+		}
 
-        $filters = $request->all()['filters'] ?? [];
+		$patient = $request->get('patient');
+		if ($patient) $work_builder->whereLike('patient', '%' . $patient . '%');
 
-        $date = $filters['date'] ?? null;
-        if ($date) {
-            $startDate = date('Y-m', strtotime($date)) . '-01';
-            $endDate = date("Y-m-t", strtotime($startDate)); // последний день месяца
-            $work_builder->whereBetween('start', [$startDate, $endDate . ' 23:59:59']);
-        }
+		$mid = (int) $request->get('mid', 0);
+		if ($mid) $work_builder->where('mid', $mid);
 
-        $patient = ($filters['patient'] ?? null);
-        if ($patient) $work_builder->whereLike('patient', '%' . $patient . '%');
+		$cid = (int) $request->get('cid', 0);
+		if ($cid > 0) $work_builder->where('cid', $cid);
 
-        $mid = (int)($filters['mid'] ?? 0);
-        if ($mid) $work_builder->where('mid', $mid);
+		$sort = $request->get('sort', 'id');
+		$direction = $request->get('direction', 'asc');
+		if (in_array($sort, ['id', 'start', 'end'])) $work_builder->orderBy($sort, $direction);
 
-        $cid = (int)($filters['cid'] ?? 0);
-        if ($cid > 0) $work_builder->where('cid', $cid);
+		$items = $work_builder->get();
 
+		return Inertia::render('Works/Browse', [
+			'prev_url' => URL::previous(),
+			'items' => $items,
+			'default_filters' => $this->defaultFilters(),
+			'filters' => [
+				'date' => $date,
+				'patient' => $patient,
+				'mechanics' => [
+					'selected' => $mid,
+					'items' => Mechanic::all()->map(fn($m) => ['value' => $m->id, 'label' => $m->name]),
+				],
+				'clinics' => [
+					'selected' => $cid,
+					'items' => Clinic::all(),
+				],
+			],
+			'sort' => $sort,
+			'direction' => $direction,
+		]);
+	}
 
-
-        return Inertia::render('Works/Browse', [
-            'prev_url' => URL::previous(),
-            'items' => $work_builder->get(),
-            'default_filters' => $this->defaultFilters(),
-            'filters' => [
-                'date' => $date,
-                'patient' => $patient,
-                'mechanics' => [
-                    'selected' => $mid,
-                    'items' => Mechanic::all()->map(fn($m) => ['value' => $m->id, 'label' => $m->name]),
-                ],
-                'clinics' => [
-                    'selected' => $cid,
-                    'items' => Clinic::all(),
-                ],
-            ],
-        ]);
-    }
-
-    public function create(): Response
+    public function create() : Response
     {
         return Inertia::render('Works/Create', [
             'prev_url' => URL::previous(),
@@ -88,64 +92,96 @@ class WorksController extends Controller
         ]);
     }
 
-    public function store(WorksRequest $request): RedirectResponse
-    {
-        $validated = $request->validated();
+	public function store(WorksRequest $request) : RedirectResponse
+	{
+		$validated = $request->validated();
 
-        $data = $request->all();
-        if (!Clinic::find((int)$data['cid'], 'id')) return back()->with('error', 'Неверный ID клиники!')->withInput();
-        if (!Mechanic::find((int)$data['mid'], 'id')) return back()->with('error', 'Неверный ID техника!')->withInput();
-        if (!WorkType::find((int)$data['wtid'], 'id')) return back()->with('error', 'Неверный ID типа работы!')->withInput();
+		// Проверяем существование клиники и механика, что бы не померло потом
+		if (!Clinic::find($validated['cid'])) return back()->with('error', 'Неверный ID клиники!')->withInput();
+		if (!Mechanic::find($validated['mid'])) return back()->with('error', 'Неверный ID техника!')->withInput();
 
-        $validated['state'] = Work::STATE_NOT_START;
+		$work = Work::create([
+			'start'   => $validated['start'],
+			'end'     => $validated['end'],
+			'state'   => self::STATE_NOT_START,
+			'patient' => $validated['patient'],
+			'cid'     => $validated['cid'],
+			'mid'     => $validated['mid'],
+			'comment' => $validated['comment'] ?? null,
+			'cost'    => 0,
+		]);
 
-        $validated['cost'] = 0;
+		$pivotData = [];
+		foreach ($validated['works'] as $workType) $pivotData[$workType['id']] = ['count' => $workType['quantity']];
 
-        Work::create($validated);
+		// Привязываем типы работ с указанием количества
+		$work->workTypes()->attach($pivotData);
 
-        return to_route('works.index');
-    }
+		return to_route('works.index');
+	}
 
-    public function edit(string $id): Response
-    {
-        Work::findOrFail($id);
-        return Inertia::render('Works/Update', [
-            'prev_url' => URL::previous(),
-            'data' => [
-                'item' => Work::whereId($id)->first(),
-                'states' => [
-                    Work::STATE_NOT_START => 'Не начато',
-                    Work::STATE_IN_PROCCESS => 'В процессе',
-                    Work::STATE_COMPLETED => 'Завершено',
-                    Work::STATE_SENT => 'Отправлено',
-                ],
-                'clinics' => Clinic::all(),
-                'mechanics' => Mechanic::all(),
-                'works_types' => WorkType::all()
-            ]
-        ]);
-    }
+	public function edit(string $id): Response
+	{
+		$work = Work::with('workTypes')->findOrFail($id);
 
-    public function update(WorksRequest $request, string $id): RedirectResponse
-    {
-        Work::findOrFail($id);
+		$currentWorkTypes = $work->workTypes->map(function ($type) { return ['id' => $type->id, 'quantity' => $type->pivot->count]; })->toArray();
 
-        $validated = $request->validated();
+		return Inertia::render('Works/Update', [
+			'prev_url' => URL::previous(),
+			'data' => [
+				'item' => $work,
+				'states' => [
+					self::STATE_NOT_START => 'Не начато',
+					self::STATE_IN_PROCESS => 'В процессе',
+					self::STATE_COMPLETED => 'Завершено',
+					self::STATE_SENT => 'Отправлено',
+				],
+				'clinics' => Clinic::all(),
+				'mechanics' => Mechanic::all(),
+				'works_types' => WorkType::all(),
+				'current_work_types' => $currentWorkTypes, // передаём текущие типы
+			]
+		]);
+	}
 
-        if (!Clinic::find($validated['cid'], 'id')) return back()->with('error', 'Неверный ID клиники!')->withInput();
-        if (!Mechanic::find($validated['mid'], 'id')) return back()->with('error', 'Неверный ID техника!')->withInput();
-        if (!$wt = WorkType::find($validated['wtid'], ['id', 'cost'])) return back()->with('error', 'Неверный ID типа работы!')->withInput();
+	public function update(WorksRequest $request, string $id) : RedirectResponse
+	{
+		$work = Work::findOrFail($id);
+		$validated = $request->validated();
 
-        if ($validated['state'] == Work::STATE_COMPLETED) $validated['cost'] = $wt->cost;
+		if (!Clinic::find($validated['cid'])) return back()->with('error', 'Неверный ID клиники!')->withInput();
+		if (!Mechanic::find($validated['mid'])) return back()->with('error', 'Неверный ID техника!')->withInput();
 
-//        dd($validated);
+		$work->update([
+			'start'   => $validated['start'],
+			'end'     => $validated['end'],
+			'state'   => $validated['state'],
+			'patient' => $validated['patient'],
+			'cid'     => $validated['cid'],
+			'mid'     => $validated['mid'],
+			'comment' => $validated['comment'] ?? null,
+		]);
 
-        Work::whereId($id)->update($validated);
+		$pivotData = [];
+		foreach ($validated['works'] as $workType) { $pivotData[$workType['id']] = ['count' => $workType['quantity']]; }
 
-        return to_route('works.index');
-    }
+		// Этот вызов удаляет из таблицы `work_work_type` все записи у которых `work_work_type`.`work`.`id`={$id} <--- (типо id редактируемой работы)
+		$work->workTypes()->sync($pivotData);
 
-    public function destroy(string $id): RedirectResponse
+		if ($validated['state'] == self::STATE_COMPLETED)
+		{
+			$totalCost = 0;
+
+			// А этот вызов зыгружает в модель Work записи из таблицы `work_work_type` у которых `work_work_type`.`work`.`id`={$id}
+			$work->load('workTypes');
+			foreach ($work->workTypes as $type) $totalCost += $type->cost * $type->pivot->count;
+			$work->update(['cost' => $totalCost]);
+		}
+
+		return to_route('works.index');
+	}
+
+    public function destroy(string $id) : RedirectResponse
     {
         Work::findOrFail($id);
         Work::destroy($id);

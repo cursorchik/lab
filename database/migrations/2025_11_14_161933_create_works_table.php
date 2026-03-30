@@ -16,8 +16,8 @@ return new class extends Migration
             $table->timestamps();
             $table->date('start');
             $table->date('end')->nullable();
-            $table->integer('state');
-            $table->integer('count'); // 0 - не начата; 1 - в работе; 2 - завершена; 3 - увезли
+            $table->integer('state'); // 0 - не начата; 1 - в работе; 2 - завершена; 3 - увезли
+            $table->integer('count');
             $table->integer('mid')->comment('mechanicID');
             $table->integer('cid')->comment('clinicID');
             $table->integer('wtid')->comment('workTypeID');

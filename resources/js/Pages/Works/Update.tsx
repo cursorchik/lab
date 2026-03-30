@@ -1,106 +1,170 @@
-import {Link, Form, usePage} from "@inertiajs/react";
+import { Link, usePage, useForm } from "@inertiajs/react";
 import WorkLayout from "@/Layouts/work/WorkLayout";
 import React from "react";
+import ErrorHint from '@/Components/custom/Error';
+import { MultiSelectQuantity, SelectedItem } from '@/Components/custom/MultiSelectQuantity';
 
 type WorksProps = {
-    prev_url: string,
-    data: {
-        item : {
-            id          : number,
-            start       : string,
-            end         : string,
-            patient     : string,
-            count       : number,
-            state       : number
-            cid         : number,
-            mid         : number,
-            wtid        : number,
-            comment     : string,
-        },
-        states      : string[],
-        clinics     : {id: number, name: string }[],
-        mechanics   : {id: number, name: string }[],
-        works_types : {id: number, name: string, cost: number }[],
-    }
+	prev_url: string,
+	data: {
+		item: {
+			id: number,
+			start: string,
+			end: string,
+			patient: string,
+			state: number,
+			cid: number,
+			mid: number,
+			comment: string,
+		},
+		states: string[],
+		clinics: { id: number, name: string }[],
+		mechanics: { id: number, name: string }[],
+		works_types: { id: number, name: string, cost: number }[],
+		current_work_types: SelectedItem[]; // { id: number, quantity: number }[]
+	}
 }
 
 export default function Update(props: WorksProps)
 {
-    const { errors, flash } = usePage().props;
+	const { errors, flash } = usePage().props;
 
-    return (<WorkLayout title="Список работ / Изменение" flash={flash}>
-        <Link href="/" className="btn btn-link">Назад</Link>
-        <Link onClick={(e) => { if (!confirm('Удалить работу?')) { e.preventDefault(); } } } className="btn btn-link" title="Удалить" href={'/works/destroy/' + props.data.item.id} preserveScroll>Удалить</Link>
-        <Form disableWhileProcessing className="mt-4" action={ '/works/update/' + props.data.item.id } method="post">
-            <div className="flex flex-col justify-center min-w-60 max-w-screen-md">
-                <div className="mb-3">
-                    <label htmlFor="state" className="form-label">Состояние</label>
-                    <select className="form-select" name="state" id="state" onChange={e => console.log(e.target.value)}>
-                        <option value="-1">Не указано</option>
-                        {props.data.states?.map((item, index) => <option key={index} selected={index == props.data.item.state} value={index}>{item}</option>)}
-                    </select>
-                    {errors.state && (<div>{errors.state}</div>)}
-                </div>
+	const { data, setData, post, processing } = useForm({
+		start	: props.data.item.start,
+		end		: props.data.item.end,
+		state	: props.data.item.state,
+		patient	: props.data.item.patient,
+		cid		: props.data.item.cid,
+		mid		: props.data.item.mid,
+		comment	: props.data.item.comment ?? '',
+		works	: props.data.current_work_types
+	});
 
-                <div className="mb-3">
-                    <label htmlFor="start" className="form-label">Дата начала</label>
-                    <input type="date" name="start" defaultValue={props.data.item.start} className="form-control" id="start"/>
-                    {errors.start && (<div>{errors.start}</div>)}
-                </div>
+	const handleSubmit = (e: React.FormEvent) =>
+	{
+		e.preventDefault();
+		post(`/works/update/${props.data.item.id}`);
+	};
 
-                <div className="mb-3">
-                    <label htmlFor="end" className="form-label">Дата сдачи</label>
-                    <input type="date" name="end" defaultValue={props.data.item.end} className="form-control" id="end"/>
-                    {errors.end && (<div>{errors.end}</div>)}
-                </div>
+	return (
+		<WorkLayout title="Список работ / Изменение" flash={flash}>
+			<Link href="/" className="btn btn-link">Назад</Link>
+			<Link
+				title="Удалить"
+				preserveScroll
+				className="btn btn-link"
+				href={'/works/destroy/' + props.data.item.id}
+				onClick={(e) => { if (!confirm('Удалить работу?')) e.preventDefault(); }}
+			>
+				Удалить
+			</Link>
+			<form className="mt-4" onSubmit={handleSubmit}>
+				<div className="flex flex-col justify-center min-w-60 max-w-screen-md">
+					{/* Состояние */}
+					<div className="mb-3">
+						<label htmlFor="state" className="form-label">Состояние</label>
+						<select
+							id="state"
+							value={data.state}
+							className="form-select"
+							onChange={e => setData('state', Number(e.target.value))}
+						>
+							<option value={-1}>Не указано</option>
+							{props.data.states?.map((item, index) => (<option key={index} value={index}>{item}</option>))}
+						</select>
+						<ErrorHint text={errors.state} />
+					</div>
 
-                <div className="mb-3">
-                    <label htmlFor="count" className="form-label">Кол-во</label>
-                    <input type="number" name="count" defaultValue={props.data.item.count} className="form-control" id="count"/>
-                    {errors.count && (<div>{errors.count}</div>)}
-                </div>
+					{/* Дата начала */}
+					<div className="mb-3">
+						<label htmlFor="start" className="form-label">Дата начала</label>
+						<input
+							type="date"
+							id="start"
+							className="form-control"
+							value={data.start}
+							onChange={e => setData('start', e.target.value)}
+						/>
+						<ErrorHint text={errors.start} />
+					</div>
 
-                <div className="mb-3">
-                    <label htmlFor="patient" className="form-label">ФИО пациента</label>
-                    <textarea className="form-control" name="patient" id="patient" defaultValue={props.data.item.patient}/>
-                    {errors.patient && (<div>{errors.patient}</div>)}
-                </div>
+					{/* Дата сдачи */}
+					<div className="mb-3">
+						<label htmlFor="end" className="form-label">Дата сдачи</label>
+						<input
+							id="end"
+							type="date"
+							value={data.end}
+							className="form-control"
+							onChange={e => setData('end', e.target.value)}
+						/>
+						<ErrorHint text={errors.end} />
+					</div>
 
-                <div className="mb-3">
-                    <label htmlFor="clinic" className="form-label">Название клиники</label>
-                    <select className="form-select" name="cid" id="clinic">
-                        <option value="0">Не указано</option>
-                        {props.data.clinics?.map(item => <option key={item.id} selected={item.id == props.data.item.cid} value={item.id}>{item.name}</option>)}
-                    </select>
-                    {errors.cid && (<div>{errors.cid}</div>)}
-                </div>
+					{/* Пациент */}
+					<div className="mb-3">
+						<label htmlFor="patient" className="form-label">ФИО пациента</label>
+						<textarea
+							id="patient"
+							value={data.patient}
+							className="form-control"
+							onChange={e => setData('patient', e.target.value)}
+						/>
+						<ErrorHint text={errors.patient} />
+					</div>
 
-                <div className="mb-3">
-                    <label htmlFor="mechanic" className="form-label">Техник</label>
-                    <select className="form-select" name="mid" id="mechanic">
-                        <option value="0">Не указано</option>
-                        {props.data.mechanics?.map(item => <option key={item.id} selected={item.id == props.data.item.mid} value={item.id}>{item.name}</option>)}
-                    </select>
-                    {errors.mid && (<div>{errors.mid}</div>)}
-                </div>
+					{/* Клиника */}
+					<div className="mb-3">
+						<label htmlFor="clinic" className="form-label">Название клиники</label>
+						<select
+							id="clinic"
+							value={data.cid}
+							className="form-select"
+							onChange={e => setData('cid', Number(e.target.value))}
+						>
+							<option value={0}>Не указано</option>
+							{props.data.clinics?.map(item => (<option key={item.id} value={item.id}>{item.name}</option>))}
+						</select>
+						<ErrorHint text={errors.cid} />
+					</div>
 
-                <div className="mb-3">
-                    <label htmlFor="works_types" className="form-label">Тип работы</label>
-                    <select className="form-select" name="wtid" id="works_types">
-                        <option value="0">Не указано</option>
-                        {props.data.works_types?.map(item => <option key={item.id} selected={item.id == props.data.item.wtid} value={item.id}>{item.name}</option>)}
-                    </select>
-                    {errors.wtid && (<div>{errors.wtid}</div>)}
-                </div>
+					{/* Механик */}
+					<div className="mb-3">
+						<label htmlFor="mechanic" className="form-label">Техник</label>
+						<select
+							id="mechanic"
+							value={data.mid}
+							className="form-select"
+							onChange={e => setData('mid', Number(e.target.value))}
+						>
+							<option value={0}>Не указано</option>
+							{props.data.mechanics?.map(item => (<option key={item.id} value={item.id}>{item.name}</option>))}
+						</select>
+						<ErrorHint text={errors.mid} />
+					</div>
 
-                <div className="mb-3">
-                    <label htmlFor="comment" className="form-label">Комментарий</label>
-                    <textarea className="form-control" name="comment" id="comment" defaultValue={props.data.item.comment}/>
-                    {errors.comment && (<div>{errors.comment}</div>)}
-                </div>
+					{/* Типы работ с количеством */}
+					<div className="mb-3">
+						<label htmlFor="works_types" className="form-label">Типы работ</label>
+						<MultiSelectQuantity
+							value={data.works}
+							options={props.data.works_types}
+							onChange={(val) => setData('works', val)}
+							placeholder="Выберите типы работ"
+						/>
+						<ErrorHint text={errors.works} />
+					</div>
 
-                <button className="btn btn-primary" type="submit">Применить</button>
-            </div>
-        </Form>
-    </WorkLayout>);
+					{/* Комментарий */}
+					<div className="mb-3">
+						<label htmlFor="comment" className="form-label">Комментарий</label>
+						<textarea id="comment" className="form-control" value={data.comment} onChange={e => setData('comment', e.target.value)}/>
+						<ErrorHint text={errors.comment} />
+					</div>
+
+					<button className="btn btn-primary" type="submit" disabled={processing}>Применить</button>
+				</div>
+			</form>
+		</WorkLayout>
+	);
 }

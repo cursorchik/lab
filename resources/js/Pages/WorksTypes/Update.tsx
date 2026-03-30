@@ -1,6 +1,7 @@
 import {Form, Link, usePage} from "@inertiajs/react";
 import WorkLayout from "@/Layouts/work/WorkLayout";
 import React from "react";
+import ErrorHint from '@/Components/custom/Error'
 
 type WorksTypesProps = {
     prev_url: string
@@ -19,12 +20,12 @@ export default function Update(props: WorksTypesProps)
                 <div className="mb-3">
                     <label htmlFor="name" className="form-label">Название</label>
                     <textarea className="form-control" name="name" id="name" defaultValue={props.item.name}/>
-                    {errors.name && (<div>{errors.name}</div>)}
+					<ErrorHint text={errors.name}/>
                 </div>
                 <div className="mb-3">
-                    <label htmlFor="cost" className="form-label">Цена</label>
+                    <label htmlFor="cost" className="form-label">Стоимость</label>
                     <input type="number" defaultValue={props.item.cost} className="form-control" id="cost" name="cost"/>
-                    {errors.cost && (<div>{errors.cost}</div>)}
+					<ErrorHint text={errors.cost}/>
                 </div>
 
                 <button className="btn btn-primary" type="submit">Применить</button>

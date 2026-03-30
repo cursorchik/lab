@@ -2,31 +2,45 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Eloquent;
+use Illuminate\Support\Carbon;
+use Database\Factories\WorkTypeFactory;
+
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 /**
  * @property int $id
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
  * @property string $name
  * @property float $cost
- * @method static \Database\Factories\WorkTypeFactory factory($count = null, $state = [])
- * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkType newModelQuery()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkType newQuery()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkType query()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkType whereCost($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkType whereCreatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkType whereId($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkType whereName($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkType whereUpdatedAt($value)
- * @mixin \Eloquent
+ * @method static WorkTypeFactory factory($count = null, $state = [])
+ * @method static Builder<static>|WorkType newModelQuery()
+ * @method static Builder<static>|WorkType newQuery()
+ * @method static Builder<static>|WorkType query()
+ * @method static Builder<static>|WorkType whereCost($value)
+ * @method static Builder<static>|WorkType whereCreatedAt($value)
+ * @method static Builder<static>|WorkType whereId($value)
+ * @method static Builder<static>|WorkType whereName($value)
+ * @method static Builder<static>|WorkType whereUpdatedAt($value)
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Work> $works
+ * @property-read int|null $works_count
+ * @mixin Eloquent
  */
 class WorkType extends Model
 {
-    /** @use HasFactory<\Database\Factories\WorkTypeFactory> */
+    /** @use HasFactory<WorkTypeFactory> */
     use HasFactory;
 
     protected $fillable = ['name', 'cost'];
 
+	public function works() : BelongsToMany
+	{
+		return $this->belongsToMany(Work::class, 'work_work_type')
+			->withPivot('count')
+			->withTimestamps();
+	}
 }

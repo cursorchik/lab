@@ -33,23 +33,31 @@ class ClinicsController extends Controller
             'date' => 'string',
         ],
     ])]
-    public function collectBuilderIndex(array $filters) : array
-    {
-        $date = $filters['date'] ?? $this->defaultFilters()['date'];
-        $condition = ['`cid`=`clinics`.`id`'];
-        if ($date)
-        {
-            $startDate = date('Y-m', strtotime($date)) . '-01';
-            $endDate = date("Y-m-t", strtotime($startDate)); // последний день месяца
-            $condition[] = "`start` BETWEEN '$startDate' AND '$endDate 23:59:59'";
-        }
+	protected function collectBuilderIndex(array $filters): array
+	{
+		$date = $filters['date'] ?? $this->defaultFilters()['date'];
+		$startDate = $this->getStartDate($date);
+		$endDate = $this->getEndDate($date);
 
-        $condition = implode(' AND ', $condition);
-        return [
-            'builder' => DB::table('clinics')->select(DB::raw("*, (SELECT SUM(`cost` * `count`) FROM `works` WHERE {$condition}) as `salary`")),
-            'filters' => $filters,
-        ];
-    }
+		$query = DB::table('clinics')
+			->select('clinics.*')
+			->selectSub(function ($sub) use ($startDate, $endDate) {
+				$sub->from('works')
+					->join('work_work_type', 'works.id', '=', 'work_work_type.work_id')
+					->join('work_types', 'work_work_type.work_type_id', '=', 'work_types.id')
+					->whereRaw('`works`.`cid` = `clinics`.`id`')
+					->whereBetween('works.start', [$startDate, $endDate])
+					->selectRaw('SUM(`work_types`.`cost` * `work_work_type`.`count`)');
+			}, 'salary');
+
+		return [
+			'builder' => $query,
+			'filters' => $filters,
+		];
+	}
+
+	protected function getStartDate(string $date): string { return date('Y-m', strtotime($date)) . '-01'; }
+	protected function getEndDate(string $date): string { return date('Y-m-t 23:59:59', strtotime($this->getStartDate($date))); }
 
     public function indexData(Request $request) : JsonResponse
     {
@@ -111,51 +119,76 @@ class ClinicsController extends Controller
         return to_route('clinics.index');
     }
 
-    public function invoice(Request $request) : Response
-    {
-        $validated = $request->validate([
-            'id' => 'required|integer',
-            'date' => 'required|date',
-        ]);
-        $data = Clinic::findOrFail($validated['id']);
+	public function invoice(Request $request): Response
+	{
+		$validated = $request->validate([
+			'id'   => 'required|integer',
+			'date' => 'required|date',
+		]);
 
-        $condition = ["`cid`={$validated['id']}"];
+		$clinic = Clinic::findOrFail($validated['id']);
 
-        $startDate = date('Y-m', strtotime($validated['date'])) . '-01';
-        $endDate = date('Y-m-t', strtotime($startDate)); // последний день месяца
-        $condition[] = "`start` BETWEEN '$startDate' AND '$endDate 23:59:59'";
-        $where = implode(' AND ', $condition);
+		$startDate = $this->getStartDate($validated['date']);
+		$endDate   = $this->getEndDate($validated['date']);
 
-        $items = DB::table('works')->select(DB::raw("`start`, `patient`, (SELECT `name` FROM `work_types` WHERE `id`=`wtid`) as `name`, `cost`, `count`, (`count`*`cost`) as `salary`"))->whereRaw($where)->get();
+		$items = DB::table('works')
+			->join('work_work_type', 'works.id', '=', 'work_work_type.work_id')
+			->join('work_types', 'work_work_type.work_type_id', '=', 'work_types.id')
+			->where('works.cid', $validated['id'])
+			->whereBetween('works.start', [$startDate, $endDate])
+			->select(
+				'works.start',
+				'works.patient',
+				'work_types.name',
+				'work_types.cost',
+				'work_work_type.count',
+				DB::raw('`work_types`.`cost` * `work_work_type`.`count` as salary')
+			)
+			->get();
 
-        return Inertia::render('Clinics/Accounting', [
-            'id'        => $validated['id'],
-            'date'      => $startDate,
-            'name'      => $data->name,
-            'items'     => $items,
-            'url'       => URL::current(),
-            'prev_url'  => URL::previous(),
-        ]);
-    }
+		return Inertia::render('Clinics/Accounting', [
+			'id'       => $validated['id'],
+			'date'     => $startDate,
+			'name'     => $clinic->name,
+			'items'    => $items,
+			'url'      => URL::current(),
+			'prev_url' => URL::previous(),
+		]);
+	}
 
-    public function invoiceGet(int $id, int $date) : Response
-    {
-        $data = Clinic::findOrFail($id);
+	public function invoiceGet(int $id, int $date): Response
+	{
+		$clinic = Clinic::findOrFail($id);
 
-        $condition = ["`cid`={$id}"];
+		$y = substr($date, 0, 4);
+		$m = substr($date, 4, 2);
+		$startDate = $y . '-' . $m . '-01';
+		$endDate   = date('Y-m-t 23:59:59', strtotime($startDate));
 
-        [$y, $md] = mb_str_split($date, 4);
-        [$m, $d] = mb_str_split($md, 2);
+		$items = DB::table('works')
+			->join('work_work_type', 'works.id', '=', 'work_work_type.work_id')
+			->join('work_types', 'work_work_type.work_type_id', '=', 'work_types.id')
+			->where('works.cid', $id)
+			->whereBetween('works.start', [$startDate, $endDate])
+			->select(
+				'works.start',
+				'works.patient',
+				'work_types.name',
+				'work_types.cost',
+				'work_work_type.count',
+				DB::raw('`work_types`.`cost` * `work_work_type`.`count` as salary')
+			)
+			->get();
 
-        $startDate = $y.'-'.$m.'-01';
-        $endDate = date('Y-m-t', strtotime($startDate)); // последний день месяца
-        $condition[] = "`start` BETWEEN '$startDate' AND '$endDate 23:59:59'";
-        $where = implode(' AND ', $condition);
-
-        $items = DB::table('works')->select(DB::raw("`start`, `patient`, (SELECT `name` FROM `work_types` WHERE `id`=`wtid`) as `name`, `cost`, `count`, (`count`*`cost`) as `salary`"))->whereRaw($where)->get();
-
-        return Inertia::render('Clinics/Accounting', ['prev_url' => URL::previous(), 'url' => URL::current(), 'url_test' => URL::full(), 'items' => $items, 'name' => $data->name, 'id' => $id, 'date' => $startDate]);
-    }
+		return Inertia::render('Clinics/Accounting', [
+			'prev_url' => URL::previous(),
+			'url'      => URL::current(),
+			'items'    => $items,
+			'name'     => $clinic->name,
+			'id'       => $id,
+			'date'     => $startDate,
+		]);
+	}
 }
 
 

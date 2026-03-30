@@ -21,12 +21,12 @@ export default function Create(props: WorksTypesProps)
                 <div className="mb-3">
                     <label htmlFor="name" className="form-label">Название</label>
                     <textarea className="form-control" name="name" id="name" aria-describedby="nameHelp"/>
-                    {errors.name && (<div>{errors.name}</div>)}
+                    {errors.name && (<div className="inline-block text-xs p-2 bg-gray-300 font-medium text-gray-700 mt-2 rounded-sm">⛔ {errors.name}</div>)}
                 </div>
                 <div className="mb-3">
-                    <label htmlFor="cost" className="form-label">Цена</label>
+                    <label htmlFor="cost" className="form-label">Стоимость</label>
                     <input type="number" className="form-control" name="cost" id="cost" aria-describedby="costHelp"/>
-                    {errors.cost && (<div>{errors.cost}</div>)}
+                    {errors.cost && (<div className="inline-block text-xs p-2 bg-gray-300 font-medium text-gray-700 mt-2 rounded-sm">⛔ {errors.cost}</div>)}
                 </div>
 
                 <button className="btn btn-primary" type="submit">Добавить работу</button>

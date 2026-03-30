@@ -2,12 +2,17 @@
 
 namespace App\Models;
 
+use App\Interfaces\IWork;
+
 use Eloquent;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Carbon;
+
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 use Database\Factories\WorkFactory;
 
@@ -37,59 +42,47 @@ use Database\Factories\WorkFactory;
  * @property int $wtid workTypeID
  * @property string $patient
  * @property int $cost
- * @property-read \App\Models\Clinic|null $clinic
- * @property-read \App\Models\Mechanic|null $mechanic
- * @property-read \App\Models\WorkType|null $workType
+ * @property-read Clinic|null $clinic
+ * @property-read Mechanic|null $mechanic
+ * @property-read WorkType|null $workType
  * @method static Builder<static>|Work whereCid($value)
  * @method static Builder<static>|Work whereCost($value)
  * @method static Builder<static>|Work whereMid($value)
  * @method static Builder<static>|Work wherePatient($value)
  * @method static Builder<static>|Work whereWtid($value)
+ * @property-read Collection<int, WorkType> $workTypes
+ * @property-read int|null $work_types_count
  * @mixin Eloquent
  */
-class Work extends Model
+class Work extends Model implements IWork
 {
     /** @use HasFactory<WorkFactory> */
     use HasFactory;
-
-    const STATE_NOT_START = 0;
-    const STATE_IN_PROCCESS = 1;
-    const STATE_COMPLETED = 2;
-    const STATE_SENT = 3;
-
-    const STATES = [
-        self::STATE_NOT_START,
-        self::STATE_IN_PROCCESS,
-        self::STATE_COMPLETED,
-        self::STATE_SENT
-    ];
 
     protected $fillable = [
         'start',
         'end',
         'state',
-        'count',
         'mid',
         'cid',
-        'wtid',
         'comment',
         'patient',
         'cost',
     ];
 
-    // Связь с WorkType
-    public function workType() : BelongsTo
-    {
-        return $this->belongsTo(WorkType::class, 'wtid');
-    }
+	// Связь "многие ко многим" с WorkType через таблицу work_work_type
+	public function workTypes() : BelongsToMany
+	{
+		return $this->belongsToMany(WorkType::class, 'work_work_type')
+			->withPivot('count')
+			->withTimestamps();
+	}
 
-    // Связь с Clinic
     public function clinic() : BelongsTo
     {
         return $this->belongsTo(Clinic::class, 'cid');
     }
 
-    // Связь с Mechanic
     public function mechanic() : BelongsTo
     {
         return $this->belongsTo(Mechanic::class, 'mid');
