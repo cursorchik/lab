@@ -8,7 +8,7 @@ use App\Traits\Filters;
 use Inertia\Inertia;
 use Inertia\Response;
 
-use App\Models\{Clinic, Mechanic, Work, WorkType};
+use App\Models\{Clinic, ClinicWorkLock, Mechanic, MechanicWorkLock, Work, WorkType};
 
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
@@ -31,6 +31,7 @@ class WorksController extends Controller implements IWork
             ],
             'date' => date('Y-m-d'),
             'patient' => '',
+			'lock_type' => 'none',
         ];
     }
 
@@ -59,7 +60,71 @@ class WorksController extends Controller implements IWork
 		$direction = $request->get('direction', 'asc');
 		if (in_array($sort, ['id', 'start', 'end'])) $work_builder->orderBy($sort, $direction);
 
+		$lockType = $request->get('lock_type', '');
+		if ($lockType)
+		{
+			switch ($lockType)
+			{
+				case 'clinic':
+					// Заблокировано клиникой, но НЕ техником
+					$work_builder->whereHas('clinicLock', function ($query)
+					{
+						$query->whereColumn('clinic_work_locks.clinic_id', 'works.cid');
+					})
+					->whereDoesntHave('mechanicLock');
+					break;
+				case 'mechanic':
+					// Заблокировано техником, но НЕ клиникой
+					$work_builder->whereHas('mechanicLock', function ($query)
+					{
+						$query->whereColumn('mechanic_work_locks.mechanic_id', 'works.mid');
+					})
+					->whereDoesntHave('clinicLock');
+					break;
+				case 'both':
+					// Заблокировано и клиникой, и техником
+					$work_builder->whereHas('clinicLock', function ($query)
+					{
+						$query->whereColumn('clinic_work_locks.clinic_id', 'works.cid');
+					})
+					->whereHas('mechanicLock', function ($query)
+					{
+						$query->whereColumn('mechanic_work_locks.mechanic_id', 'works.mid');
+					});
+					break;
+				case 'any':
+					// Заблокировано любой стороной
+					$work_builder->where(function($query) {
+						$query->whereHas('clinicLock', function ($q)
+						{
+							$q->whereColumn('clinic_work_locks.clinic_id', 'works.cid');
+						})
+						->orWhereHas('mechanicLock', function($q)
+						{
+							$q->whereColumn('mechanic_work_locks.mechanic_id', 'works.mid');
+						});
+					});
+					break;
+				case 'none':
+					// Не заблокировано
+					$work_builder->whereDoesntHave('clinicLock')->whereDoesntHave('mechanicLock');
+					break;
+			}
+			}
+
 		$items = $work_builder->get();
+
+		// Загружаем блокировки для всех работ
+		$workIds = $items->pluck('id');
+		$clinicLocks = ClinicWorkLock::whereIn('work_id', $workIds)->get()->keyBy('work_id');
+		$mechanicLocks = MechanicWorkLock::whereIn('work_id', $workIds)->get()->keyBy('work_id');
+
+		$items->transform(function ($work) use ($clinicLocks, $mechanicLocks) {
+			$work->locked_by_clinic = $clinicLocks->has($work->id);
+			$work->locked_by_mechanic = $mechanicLocks->has($work->id);
+			$work->locked_both = $work->locked_by_clinic && $work->locked_by_mechanic;
+			return $work;
+		});
 
 		return Inertia::render('Works/Browse', [
 			'prev_url' => URL::previous(),
@@ -76,6 +141,7 @@ class WorksController extends Controller implements IWork
 					'selected' => $cid,
 					'items' => Clinic::all(),
 				],
+				'lock_type' => $lockType
 			],
 			'sort' => $sort,
 			'direction' => $direction,
@@ -147,6 +213,11 @@ class WorksController extends Controller implements IWork
 	public function update(WorksRequest $request, string $id) : RedirectResponse
 	{
 		$work = Work::findOrFail($id);
+
+		if ($work->isLockedForClinic() || $work->isLockedForMechanic()) {
+			return back()->with('error', 'Эта работа заблокирована и не может быть изменена.');
+		}
+
 		$validated = $request->validated();
 
 		if (!Clinic::find($validated['cid'])) return back()->with('error', 'Неверный ID клиники!')->withInput();
@@ -172,7 +243,7 @@ class WorksController extends Controller implements IWork
 		{
 			$totalCost = 0;
 
-			// А этот вызов зыгружает в модель Work записи из таблицы `work_work_type` у которых `work_work_type`.`work`.`id`={$id}
+			// А этот вызов выгружает в модель Work записи из таблицы `work_work_type` у которых `work_work_type`.`work`.`id`={$id}
 			$work->load('workTypes');
 			foreach ($work->workTypes as $type) $totalCost += $type->cost * $type->pivot->count;
 			$work->update(['cost' => $totalCost]);
@@ -183,9 +254,32 @@ class WorksController extends Controller implements IWork
 
     public function destroy(string $id) : RedirectResponse
     {
-        Work::findOrFail($id);
+        $work = Work::findOrFail($id);
+
+		if ($work->isLockedForClinic() || $work->isLockedForMechanic()) {
+			return back()->with('error', 'Эта работа заблокирована и не может быть удалена.');
+		}
+
         Work::destroy($id);
 
         return to_route('works.index');
     }
+
+	public function unlock(Request $request, string $id) : RedirectResponse
+	{
+		$work = Work::findOrFail($id);
+		$type = $request->input('unlock_type', 'both');
+
+		if ($type === 'clinic' || $type === 'both')
+		{
+			ClinicWorkLock::where('work_id', $id)->delete();
+		}
+
+		if ($type === 'mechanic' || $type === 'both')
+		{
+			MechanicWorkLock::where('work_id', $id)->delete();
+		}
+
+		return back()->with('success', 'Блокировка снята.');
+	}
 }

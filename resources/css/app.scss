@@ -3,14 +3,20 @@
 @tailwind utilities;
 
 a.i, button.i {
-    outline: none; border: none; background-color: transparent;
+    outline: none; border: none; background-color: transparent; cursor: pointer;
 
-    display: inline-block; width: 24px; height: 24px;
-    background-repeat: no-repeat; background-size: 24px; background-position: center;
+	$_size: 20px;
+    display: inline-block; width: $_size; height: $_size; padding: 14px; border-radius: 2px;
+    background-repeat: no-repeat; background-size: $_size; background-position: center;
 
     &.edit { background-image: url("/resources/css/icons/edit.svg"); }
+    &.unlock { background-image: url("/resources/css/icons/lock-keyhole-open.svg"); background-size: 18px; }
     &.delete { background-image: url("/resources/css/icons/delete.svg"); }
     &.invoice { background-image: url("/resources/css/icons/invoice_border.svg"); background-size: 28px; }
+
+	&:hover {
+		background-color: #f1f1f1;
+	}
 }
 
 div#modal {

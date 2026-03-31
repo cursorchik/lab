@@ -3,6 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\MechanicsRequest;
+use App\Interfaces\IWork;
+use App\Models\MechanicWorkLock;
+use App\Models\Work;
+use Illuminate\Support\Collection;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -40,63 +44,46 @@ class MechanicsController extends Controller
 		return date('Y-m-t 23:59:59', strtotime($startDate));
 	}
 
-	#[ArrayShape([
-		'builder' => Builder::class,
-		'filters' => [
-			'date' => 'string',
-		],
-	])]
-	public function collectBuilderIndex(array $filters): array
+	public function collectBuilderIndex() : Builder
 	{
-		$date = $filters['date'] ?? $this->defaultFilters()['date'];
-		$startDate = $this->getStartDate($date);
-		$endDate = $this->getEndDate($date);
-
-		$query = DB::table('mechanics')
+		return DB::table('mechanics')
 			->select('mechanics.*')
-			->selectSub(function ($sub) use ($startDate, $endDate) {
+			->selectSub(function ($sub) {
 				$sub->from('works')
 					->join('work_work_type', 'works.id', '=', 'work_work_type.work_id')
 					->join('work_types', 'work_work_type.work_type_id', '=', 'work_types.id')
 					->whereRaw('`works`.`mid` = `mechanics`.`id`')
-					->whereBetween('works.start', [$startDate, $endDate])
+					->where('works.state', IWork::STATE_COMPLETED)
+					->whereNotExists(function ($query) {
+						$query->select(DB::raw(1))
+							->from('mechanic_work_locks')
+							->whereColumn('mechanic_work_locks.work_id', 'works.id')
+							->whereColumn('mechanic_work_locks.mechanic_id', 'works.mid');
+					})
 					->selectRaw('SUM(`work_types`.`cost` * `work_work_type`.`count`)');
 			}, 'salary');
-
-		return [
-			'builder' => $query,
-			'filters' => $filters,
-		];
 	}
 
-	public function indexData(Request $request): JsonResponse
+	public function indexData() : JsonResponse
 	{
-		$data = $this->collectBuilderIndex($request->all()['filters'] ?? []);
-
 		return response()->json([
-			'items' => $data['builder']->get()
+			'items' => $this->collectBuilderIndex()->get()
 		]);
 	}
 
-	public function index(Request $request): Response
+	public function index() : Response
 	{
-		$data = $this->collectBuilderIndex($this->getFilters($request));
-
 		return Inertia::render('Mechanics/Browse', [
-			'items' => $data['builder']->get(),
-			'default_filters' => $this->defaultFilters(),
-			'filters' => [
-				'date' => $data['filters']['date'] ?? null,
-			],
+			'items' => $this->collectBuilderIndex()->get(),
 		]);
 	}
 
-	public function create(): Response
+	public function create() : Response
 	{
 		return Inertia::render('Mechanics/Create', ['prev_url' => URL::previous()]);
 	}
 
-	public function store(MechanicsRequest $request): RedirectResponse
+	public function store(MechanicsRequest $request) : RedirectResponse
 	{
 		$validated = $request->validated();
 
@@ -105,13 +92,13 @@ class MechanicsController extends Controller
 		return to_route('mechanics.index');
 	}
 
-	public function edit(string $id): Response
+	public function edit(string $id) : Response
 	{
 		Mechanic::findOrFail($id);
 		return Inertia::render('Mechanics/Update', ['prev_url' => URL::previous(), 'item' => Mechanic::whereId($id)->first()]);
 	}
 
-	public function update(MechanicsRequest $request, string $id): RedirectResponse
+	public function update(MechanicsRequest $request, string $id) : RedirectResponse
 	{
 		Mechanic::findOrFail($id);
 		$validated = $request->validated();
@@ -121,7 +108,7 @@ class MechanicsController extends Controller
 		return to_route('mechanics.index');
 	}
 
-	public function destroy(string $id): RedirectResponse
+	public function destroy(string $id) : RedirectResponse
 	{
 		Mechanic::findOrFail($id);
 		Mechanic::destroy($id);
@@ -129,24 +116,22 @@ class MechanicsController extends Controller
 		return to_route('mechanics.index');
 	}
 
-	public function invoice(Request $request): Response
+	public function getItemsInvoice(string $id) : Collection
 	{
-		$validated = $request->validate([
-			'id'   => 'required|integer',
-			'date' => 'required|date',
-		]);
-
-		$mechanic = Mechanic::findOrFail($validated['id']);
-
-		$startDate = $this->getStartDate($validated['date']);
-		$endDate   = $this->getEndDate($validated['date']);
-
-		$items = DB::table('works')
+		return DB::table('works')
 			->join('work_work_type', 'works.id', '=', 'work_work_type.work_id')
 			->join('work_types', 'work_work_type.work_type_id', '=', 'work_types.id')
-			->where('works.mid', $validated['id'])
-			->whereBetween('works.start', [$startDate, $endDate])
+			->where('works.mid', $id)
+			->where('works.state', IWork::STATE_COMPLETED)
+			->whereNotExists(function ($query) use ($id)
+			{
+				$query->select(DB::raw(1))
+					->from('mechanic_work_locks')
+					->whereColumn('mechanic_work_locks.work_id', 'works.id')
+					->where('mechanic_work_locks.mechanic_id', $id);
+			})
 			->select(
+				'works.id',
 				'works.patient',
 				'works.start',
 				'work_types.name',
@@ -154,45 +139,56 @@ class MechanicsController extends Controller
 				'work_work_type.count',
 				DB::raw('`work_types`.`cost` * `work_work_type`.`count` as salary')
 			)
-			->get();
+			->get()
+			->groupBy('id');;
+	}
+
+	public function invoice(Request $request) : Response
+	{
+		$validated = $request->validate([
+			'id' => 'required|integer'
+		]);
+
+		$items = $this->getItemsInvoice($validated['id']);
 
 		return Inertia::render('Mechanics/Accounting', [
 			'id'    => $validated['id'],
-			'name'  => $mechanic->name,
-			'date'  => $startDate,
+			'name'  => Mechanic::findOrFail($validated['id'])->name,
 			'items' => $items,
 		]);
 	}
 
-	public function invoiceGet(int $id, int $date): Response
+	public function invoiceGet(int $id) : Response
 	{
-		$mechanic = Mechanic::findOrFail($id);
-
-		$y = substr($date, 0, 4);
-		$m = substr($date, 4, 2);
-		$startDate = $y . '-' . $m . '-01';
-		$endDate   = date('Y-m-t 23:59:59', strtotime($startDate));
-
-		$items = DB::table('works')
-			->join('work_work_type', 'works.id', '=', 'work_work_type.work_id')
-			->join('work_types', 'work_work_type.work_type_id', '=', 'work_types.id')
-			->where('works.mid', $id)
-			->whereBetween('works.start', [$startDate, $endDate])
-			->select(
-				'works.patient',
-				'works.start',
-				'work_types.name',
-				'work_types.cost',
-				'work_work_type.count',
-				DB::raw('`work_types`.`cost` * `work_work_type`.`count` as salary')
-			)
-			->get();
+		$items = $this->getItemsInvoice($id);
 
 		return Inertia::render('Mechanics/Accounting', [
 			'id'    => $id,
-			'name'  => $mechanic->name,
-			'date'  => $startDate,
+			'name'  => Mechanic::findOrFail($id)->name,
 			'items' => $items,
 		]);
+	}
+
+	public function lockWorks(Request $request) : RedirectResponse
+	{
+		$validated = $request->validate([
+			'mechanic_id' => 'required|exists:mechanics,id',
+			'work_ids'    => 'required|array',
+			'work_ids.*'  => 'exists:works,id',
+		]);
+
+		foreach ($validated['work_ids'] as $workId)
+		{
+			$work = Work::find($workId);
+			if ($work && $work->mid == $validated['mechanic_id'])
+			{
+				MechanicWorkLock::firstOrCreate([
+					'work_id' => $workId,
+					'mechanic_id' => $validated['mechanic_id'],
+				], ['locked_at' => now()]);
+			}
+		}
+
+		return back();
 	}
 }

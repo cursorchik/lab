@@ -8,6 +8,9 @@ use Eloquent;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Carbon;
 
+use App\Models\ClinicWorkLock;
+use App\Models\MechanicWorkLock;
+
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -70,6 +73,25 @@ class Work extends Model implements IWork
         'cost',
     ];
 
+	public function isLockedForClinic() : bool
+	{
+		return ClinicWorkLock::where('work_id', $this->id)
+			->where('clinic_id', $this->cid)
+			->exists();
+	}
+
+	public function isLockedForMechanic() : bool
+	{
+		return MechanicWorkLock::where('work_id', $this->id)
+			->where('mechanic_id', $this->mid)
+			->exists();
+	}
+
+	public function isFullyLocked() : bool
+	{
+		return $this->isLockedForClinic() && $this->isLockedForMechanic();
+	}
+
 	// Связь "многие ко многим" с WorkType через таблицу work_work_type
 	public function workTypes() : BelongsToMany
 	{
@@ -87,4 +109,16 @@ class Work extends Model implements IWork
     {
         return $this->belongsTo(Mechanic::class, 'mid');
     }
+
+	public function clinicLock()
+	{
+		return $this->hasOne(ClinicWorkLock::class, 'work_id')
+			->whereColumn('clinic_work_locks.clinic_id', 'works.cid');
+	}
+
+	public function mechanicLock()
+	{
+		return $this->hasOne(MechanicWorkLock::class, 'work_id')
+			->whereColumn('mechanic_work_locks.mechanic_id', 'works.mid');
+	}
 }

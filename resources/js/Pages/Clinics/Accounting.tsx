@@ -1,79 +1,148 @@
-import { Link } from "@inertiajs/react";
+import { Link, router } from "@inertiajs/react";
+import { useEffect } from "react";
 import WorkLayout from "@/Layouts/work/WorkLayout";
+import { useAccounting } from "@/hooks/useAccounting";
+import { AccountingTable, ColumnConfig } from "@/Components/custom/AccountingTable";
+
+interface WorkDetail {
+	id: number;
+	start: string;
+	patient: string;
+	name: string;
+	cost: number;
+	count: number;
+	salary: number;
+}
 
 type Props = {
-    prev_url    : string,
-    id          : number,
-    url         : string,
-    date        : string,
-    name        : number,
-    items       : { start: string, patient: string, name: string, cost: number, count: number, salary: number }[],
-}
-export default function Accounting(props: Props)
-{
-    const date = new Date(props.date);
+	prev_url: string;
+	id: number;
+	url: string;
+	name: string;
+	items: Record<number, WorkDetail[]>;
+};
 
-    const preZero = (value: number) => value < 10 ? '0' + value : value;
+export default function Accounting(props: Props) {
+	const {
+		selectedIds,
+		allSelected,
+		totalCount,
+		totalAmount,
+		handleSelectAll,
+		handleSelectWork,
+		isWorkSelected,
+	} = useAccounting(props.items);
 
-    const dateStr = date.getFullYear().toString() + preZero(date.getMonth() + 1) + preZero(date.getDate());
+	const handleLockAndPrint = () => {
+		if (selectedIds.length === 0) {
+			alert('Выберите хотя бы одну работу для блокировки.');
+			return;
+		}
 
-    window.history.replaceState(
-        null,
-        '',
-        '/clinics/invoice/' + props.id + '/' + dateStr
-    );
+		router.post("/clinics/lock-works", {
+			clinic_id: props.id,
+			work_ids: selectedIds,
+		}, {
+			preserveScroll: true,
+			onSuccess: () => {
+				window.print();
+				setTimeout(() => window.location.reload(), 500);
+			},
+			onError: (errors) => {
+				console.error('Ошибка блокировки:', errors);
+				alert('Ошибка блокировки: ' + JSON.stringify(errors));
+			},
+		});
+	};
 
-    const m = [
-        'январь',
-        'февраль',
-        'март',
-        'апрель',
-        'май',
-        'июнь',
-        'июль',
-        'август',
-        'сентябрь',
-        'октябрь',
-        'ноябрь',
-        'декабрь'
+	useEffect(() => {
+		const urlParts = window.location.pathname.split('/');
+		if (urlParts.length === 3 && urlParts[urlParts.length - 1] === props.id.toString()) return;
+		window.history.replaceState(null, '', `${window.location.href}/${props.id.toString()}`);
+	}, [props.id]);
 
-    ];
+	// Кастомный рендер для колонок клиники
+	const renderCell = (
+		item: WorkDetail,
+		column: ColumnConfig,
+		isFirstInWork: boolean,
+		totalSalary: number
+	) => {
+		switch (column.key) {
+			case 'checkbox':
+				return isFirstInWork ? (
+					<input
+						type="checkbox"
+						checked={isWorkSelected(item.id)}
+						onChange={() => handleSelectWork(item.id)}
+					/>
+				) : null;
+			case 'start':
+				return isFirstInWork ? item.start : '';
+			case 'patient':
+				return isFirstInWork ? item.patient : '';
+			case 'name':
+				return item.name;
+			case 'cost':
+				return item.cost;
+			case 'count':
+				return item.count;
+			case 'item_salary':
+				return item.salary;
+			case 'total_salary':
+				return isFirstInWork ? totalSalary : '';
+			default:
+				return '';
+		}
+	};
 
-    return (<WorkLayout title={'Список клиник / Выставление счёта за ' + m[date.getMonth()] + ' ' + date.getFullYear() + ' клиника ' + props.name + ' '}>
-        <Link className="btn btn-link" method="post" href={'/clinics'} data={{
-            filters: {
-                date: `${date.getFullYear().toString()}-${preZero(date.getMonth() + 1)}-${preZero(date.getDate())}`
-            }
-        }}>Назад</Link>
-        <a className="btn btn-link" onClick={() => window.print()}>Распечатать</a>
+	const columns: ColumnConfig[] = [
+		{ key: 'checkbox', header: '', className: 'no-print' },
+		{ key: 'start', header: 'Дата заказ-наряда' },
+		{ key: 'patient', header: 'Ф.И.О пациента' },
+		{ key: 'name', header: 'Изделие' },
+		{ key: 'cost', header: 'Цена за ед.' },
+		{ key: 'count', header: 'Кол-во ед.' },
+		{ key: 'item_salary', header: 'Итого сумма по изделиям' },
+		{ key: 'total_salary', header: 'Сумма по заказу' },
+	];
 
-        <h6>Реестр выполненых работ за {m[date.getMonth()]} Клиника {props.name} {date.getFullYear()}</h6>
+	return (
+		<WorkLayout title={`Счёт - ${props.name}`}>
+			<div className="d-flex justify-content-between no-print">
+				<Link href="/clinics" method="post" className="btn btn-link">Назад</Link>
+				<button className="btn btn-primary" onClick={handleLockAndPrint}>
+					Заблокировать выбранные и распечатать
+				</button>
+				<a className="btn btn-link" onClick={() => window.print()}>
+					Распечатать без блокировки
+				</a>
+			</div>
 
-        <table className="table table-hover mt-4">
-            <thead>
-                <tr>
-                    <th>Дата заказ-наряда</th>
-                    <th>Ф.И.О пациента</th>
-                    <th>Изделие</th>
-                    <th>Цена за ед.</th>
-                    <th>Кол-во ед.</th>
-                    <th>Итого сумма по изделиям</th>
-                    <th>Сумма по заказу</th>
-                </tr>
-            </thead>
-            <tbody>
-            {
-                props?.items?.map((item, index) => <tr key={index}>
-                    <td>{item.start}</td>
-                    <td>{item.patient}</td>
-                    <td>{item.name}</td>
-                    <td>{item.cost}</td>
-                    <td>{item.count}</td>
-                    <td>{item.salary}</td>
-                    <td>{item.salary}</td>
-                </tr>) ?? <tr><td colSpan={7} className="text-center">Данные отсутствуют</td></tr>
-            }
-            </tbody>
-        </table>
-    </WorkLayout>);
+			<h6>Реестр выполненных работ за выбранный месяц – Клиника {props.name}</h6>
+
+			<AccountingTable
+				items={props.items}
+				allSelected={allSelected}
+				totalCount={totalCount}
+				totalAmount={totalAmount}
+				handleSelectAll={handleSelectAll}
+				handleSelectWork={handleSelectWork}
+				isWorkSelected={isWorkSelected}
+				columns={columns}
+				renderCell={renderCell}
+			/>
+
+			<style>{`
+                @media print {
+                    .no-print {
+                        display: none;
+                    }
+                    .row-not-selected {
+                        display: none;
+                    }
+                }
+            `}</style>
+		</WorkLayout>
+	);
 }

@@ -11,6 +11,9 @@ use App\Http\Controllers\WorksTypesController;
 Route::get('/', [WorksController::class, 'index'])->name('works.index');
 Route::post('/', [WorksController::class, 'index'])->name('works.index');
 
+Route::post('/works/unlock/{id}', [WorksController::class, 'unlock'])->name('works.unlock');
+Route::post('/clinics/lock-works', [ClinicsController::class, 'lockWorks'])->name('clinics.lockWorks');
+Route::post('/mechanics/lock-works', [MechanicsController::class, 'lockWorks'])->name('mechanics.lockWorks');
 
 Route::prefix('works')->group(function ()
 {
@@ -28,7 +31,7 @@ Route::prefix('clinics')->group(function ()
 	Route::get('/create', [ClinicsController::class, 'create'])->name('clinics.create');
 	Route::get('/edit/{id}', [ClinicsController::class, 'edit'])->name('clinics.edit')->where('id', '[0-9]+');
 	Route::get('/destroy/{id}', [ClinicsController::class, 'destroy'])->name('clinics.destroy')->where('id', '[0-9]+');
-	Route::get('/invoice/{id}/{date}', [ClinicsController::class, 'invoiceGet'])->name('clinics.invoice.get');
+	Route::get('/invoice/{id}', [ClinicsController::class, 'invoiceGet'])->name('clinics.invoice.get');
 
 	Route::post('/', [ClinicsController::class, 'index'])->name('clinics.index');
 	Route::post('/data', [ClinicsController::class, 'indexData'])->name('clinics.index.data');
@@ -43,7 +46,7 @@ Route::prefix('mechanics')->group(function ()
 	Route::get('/create', [MechanicsController::class, 'create'])->name('mechanics.create');
 	Route::get('/edit/{id}', [MechanicsController::class, 'edit'])->name('mechanics.edit')->where('id', '[0-9]+');
 	Route::get('/destroy/{id}', [MechanicsController::class, 'destroy'])->name('mechanics.destroy')->where('id', '[0-9]+');
-	Route::get('/invoice/{id}/{date}', [MechanicsController::class, 'invoiceGet'])->name('mechanics.invoice.get');
+	Route::get('/invoice/{id}', [MechanicsController::class, 'invoiceGet'])->name('mechanics.invoice.get');
 
 	Route::post('/', [MechanicsController::class, 'index'])->name('mechanics.index');
 	Route::post('/data', [MechanicsController::class, 'indexData'])->name('mechanics.index.data');

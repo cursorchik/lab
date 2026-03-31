@@ -9,13 +9,13 @@ use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
-
-    /**
-     * Seed the application's database.
-     */
-    public function run(): void
-    {
-         Work::factory(1000)->create();
-    }
+	public function run(): void
+	{
+		$this->call([
+			WorkTypeSeeder::class,
+			ClinicSeeder::class,
+			MechanicSeeder::class,
+			WorkSeeder::class,
+		]);
+	}
 }
