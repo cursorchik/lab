@@ -94,7 +94,16 @@ class WorksTypesController extends Controller
     public function destroy(string $id) : RedirectResponse
     {
         WorkType::findOrFail($id);
-        WorkType::destroy($id);
+		try
+		{
+			WorkType::destroy($id);
+		}
+		catch (\Exception $exception)
+		{
+			return back()
+				->with('error', 'Не удалось удалить тип работы')
+				->withInput(); // Это сохранит введенные данные
+		}
 
         return to_route('works_types.index');
     }

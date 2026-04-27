@@ -9,9 +9,9 @@ type ClinicsProps = {
 
 export default function Create(props: ClinicsProps)
 {
-    const { errors } = usePage().props;
+	let { errors, flash } = usePage().props as any;
 
-    return (<WorkLayout title="Список клиник / Создание">
+    return (<WorkLayout title="Список клиник / Создание" flash={flash}>
         <Link href="/clinics" className="btn btn-link">Назад</Link>
         <Form className="mt-4" action="/clinics/store" method="post">
             <div className="flex flex-col justify-center min-w-60 max-w-screen-md">

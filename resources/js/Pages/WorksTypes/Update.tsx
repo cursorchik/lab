@@ -10,9 +10,9 @@ type WorksTypesProps = {
 
 export default function Update(props: WorksTypesProps)
 {
-    const { errors } = usePage().props;
+	let { errors, flash } = usePage().props as any;
 
-    return (<WorkLayout title="Список типов работ / Изменение ">
+    return (<WorkLayout title="Список типов работ / Изменение" flash={flash}>
         <Link href="/works_types" className="btn btn-link">Назад</Link>
         <Link onClick={(e) => { if (!confirm('Удалить тип работы?')) { e.preventDefault(); } } } className="btn btn-link" title="Удалить" href={'/works_types/destroy/' + props.item.id}>Удалить</Link>
         <Form className="mt-4" action={ '/works_types/update/' + props.item.id } method="post">

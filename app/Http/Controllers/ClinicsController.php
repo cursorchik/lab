@@ -88,6 +88,10 @@ class ClinicsController extends Controller
 
     public function destroy(string $id) : RedirectResponse
     {
+		return back()
+			->with('error', 'Для удаления обратитесь к администратору')
+			->withInput();
+
         Clinic::findOrFail($id);
         Clinic::destroy($id);
 

@@ -11,7 +11,7 @@ interface WorkLayoutProps {
 
 export default function WorkLayout({title, flash, children}: WorkLayoutProps)
 {
-    return (<>
+	return (<>
         <Head title={title}></Head>
         <div className={styles.layout}>
             <div className={styles.sidebar}>

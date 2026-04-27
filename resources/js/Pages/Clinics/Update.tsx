@@ -10,9 +10,9 @@ type ClinicsProps = {
 
 export default function Update(props: ClinicsProps)
 {
-    const { errors } = usePage().props;
+	let { errors, flash } = usePage().props as any;
 
-    return (<WorkLayout title="Список клиник / Изменение ">
+    return (<WorkLayout title="Список клиник / Изменение" flash={flash}>
         <Link href="/clinics" className="btn btn-link">Назад</Link>
         <Link onClick={(e) => { if (!confirm('Удалить клинику?')) { e.preventDefault(); } } } className="btn btn-link" title="Удалить" href={'/clinics/destroy/' + props.item.id}>Удалить</Link>
         <Form className="mt-4" action={ '/clinics/update/' + props.item.id } method="post">

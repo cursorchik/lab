@@ -14,7 +14,7 @@ type WorksProps = {
 
 export default function Create(props: WorksProps)
 {
-	const pageErrors = usePage().props.errors;
+	let { page_errors, flash } = usePage().props as any;
 
 	const { data, setData, post, processing, errors } = useForm({
 		start: '',
@@ -31,7 +31,7 @@ export default function Create(props: WorksProps)
 	const handleSubmit = (e: React.FormEvent) => { e.preventDefault(); post('/works/store'); };
 
 	return (
-		<WorkLayout title="Список работ / Создание">
+		<WorkLayout title="Список работ / Создание" flash={flash}>
 			<Link href="/" className="btn btn-link">Назад</Link>
 			<form className="mt-1" onSubmit={handleSubmit}>
 				<div className="flex flex-col justify-center min-w-60 max-w-screen-md">
@@ -44,7 +44,7 @@ export default function Create(props: WorksProps)
 							className="form-control"
 							onChange={e => setData('start', e.target.value)}
 						/>
-						<ErrorHint text={pageErrors.start} />
+						<ErrorHint text={page_errors?.start} />
 					</div>
 
 					<div className="mb-3">
@@ -56,7 +56,7 @@ export default function Create(props: WorksProps)
 							className="form-control"
 							onChange={e => setData('end', e.target.value)}
 						/>
-						<ErrorHint text={pageErrors.end} />
+						<ErrorHint text={page_errors?.end} />
 					</div>
 
 					<div className="mb-3">
@@ -71,7 +71,7 @@ export default function Create(props: WorksProps)
 							className="form-control"
 							onChange={e => setData('patient', e.target.value)}
 						/>
-						<ErrorHint text={pageErrors.patient} />
+						<ErrorHint text={page_errors?.patient} />
 					</div>
 
 					<div className="mb-3">
@@ -82,7 +82,7 @@ export default function Create(props: WorksProps)
 							onChange={(val) => setData('works', val)}
 							placeholder="Выберите тип работ(ы)"
 						/>
-						<ErrorHint text={pageErrors.works} />
+						<ErrorHint text={page_errors?.works} />
 					</div>
 
 					<div className="mb-3">
@@ -96,7 +96,7 @@ export default function Create(props: WorksProps)
 							<option value="0">Не указано</option>
 							{props.clinics?.map(item => (<option key={item.id} value={item.id}>{item.name}</option>))}
 						</select>
-						<ErrorHint text={pageErrors.cid} />
+						<ErrorHint text={page_errors?.cid} />
 					</div>
 
 					<div className="mb-3">
@@ -110,7 +110,7 @@ export default function Create(props: WorksProps)
 							<option value="0">Не указано</option>
 							{props.mechanics?.map(item => (<option key={item.id} value={item.id}>{item.name}</option>))}
 						</select>
-						<ErrorHint text={pageErrors.mid} />
+						<ErrorHint text={page_errors?.mid} />
 					</div>
 
 					<div className="mb-3">
@@ -121,7 +121,7 @@ export default function Create(props: WorksProps)
 							className="form-control"
 							onChange={e => setData('comment', e.target.value)}
 						/>
-						<ErrorHint text={pageErrors.comment} />
+						<ErrorHint text={page_errors?.comment} />
 					</div>
 
 					<button className="btn btn-primary" type="submit" disabled={processing}>Добавить</button>

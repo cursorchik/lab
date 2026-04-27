@@ -110,6 +110,10 @@ class MechanicsController extends Controller
 
 	public function destroy(string $id) : RedirectResponse
 	{
+		return back()
+			->with('error', 'Для удаления обратитесь к администратору')
+			->withInput();
+
 		Mechanic::findOrFail($id);
 		Mechanic::destroy($id);
 

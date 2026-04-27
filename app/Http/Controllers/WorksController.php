@@ -252,18 +252,23 @@ class WorksController extends Controller implements IWork
 		return to_route('works.index');
 	}
 
-    public function destroy(string $id) : RedirectResponse
-    {
-        $work = Work::findOrFail($id);
+	public function destroy(string $id): RedirectResponse
+	{
+		$work = Work::findOrFail($id);
 
 		if ($work->isLockedForClinic() || $work->isLockedForMechanic()) {
 			return back()->with('error', 'Эта работа заблокирована и не может быть удалена.');
 		}
 
-        Work::destroy($id);
+		$work->workTypes()->detach();
 
-        return to_route('works.index');
-    }
+		ClinicWorkLock::where('work_id', $id)->delete();
+		MechanicWorkLock::where('work_id', $id)->delete();
+
+		$work->delete();
+
+		return to_route('works.index');
+	}
 
 	public function unlock(Request $request, string $id) : RedirectResponse
 	{

@@ -11,9 +11,9 @@ type WorksTypesProps = {
 
 export default function Create(props: WorksTypesProps)
 {
-    const { errors } = usePage().props;
+	let { errors, flash } = usePage().props as any;
 
-    return (<WorkLayout title="Список типов работ / Создание">
+    return (<WorkLayout title="Список типов работ / Создание"  flash={flash}>
         <Link href="/works_types" className="btn btn-link">Назад</Link>
         <Link href="/works_types/import_preview">Импорт</Link>
         <Form className="mt-4" action="/works_types/store" method="post">
