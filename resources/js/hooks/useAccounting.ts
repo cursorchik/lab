@@ -42,7 +42,8 @@ export const useAccounting = (items: Record<number, WorkDetail[]>) =>
 	const totalCount = selectedIds.length > 0 ? selectedTotalCount : totalCountAll;
 	const totalAmount = selectedIds.length > 0 ? selectedTotalAmount : totalAmountAll;
 
-	const handleSelectAll = () => {
+	const handleSelectAll = () =>
+	{
 		if (allSelected) {
 			setSelectedIds([]);
 		} else {

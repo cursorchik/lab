@@ -1,10 +1,11 @@
-import { Link, router } from "@inertiajs/react";
-import { useEffect } from "react";
+import {Link, router} from "@inertiajs/react";
+import {useEffect, useState} from "react";
 import WorkLayout from "@/Layouts/work/WorkLayout";
-import { useAccounting } from "@/hooks/useAccounting";
-import { AccountingTable, ColumnConfig } from "@/Components/custom/AccountingTable";
+import {useAccounting} from "@/hooks/useAccounting";
+import {AccountingTable, ColumnConfig} from "@/Components/custom/AccountingTable";
 
-interface WorkDetail {
+interface WorkDetail
+{
 	id: number;
 	start: string;
 	patient: string;
@@ -22,7 +23,8 @@ type Props = {
 	items: Record<number, WorkDetail[]>;
 };
 
-export default function Accounting(props: Props) {
+export default function Accounting(props: Props)
+{
 	const {
 		selectedIds,
 		allSelected,
@@ -33,8 +35,20 @@ export default function Accounting(props: Props) {
 		isWorkSelected,
 	} = useAccounting(props.items);
 
-	const handleLockAndPrint = () => {
-		if (selectedIds.length === 0) {
+	const [periodFrom, setPeriodFrom] = useState('');
+	const [periodTo, setPeriodTo] = useState('');
+
+	const formatDate = (dateStr: string) =>
+	{
+		if (!dateStr) return '';
+		const [year, month, day] = dateStr.split('-');
+		return `${day}.${month}.${year}`;
+	};
+
+	const handleLockAndPrint = () =>
+	{
+		if (selectedIds.length === 0)
+		{
 			alert('Выберите хотя бы одну работу для блокировки.');
 			return;
 		}
@@ -44,31 +58,35 @@ export default function Accounting(props: Props) {
 			work_ids: selectedIds,
 		}, {
 			preserveScroll: true,
-			onSuccess: () => {
+			onSuccess: () =>
+			{
 				window.print();
 				setTimeout(() => window.location.reload(), 500);
 			},
-			onError: (errors) => {
+			onError: (errors) =>
+			{
 				console.error('Ошибка блокировки:', errors);
 				alert('Ошибка блокировки: ' + JSON.stringify(errors));
 			},
 		});
 	};
 
-	useEffect(() => {
+	useEffect(() =>
+	{
 		const urlParts = window.location.pathname.split('/');
 		if (urlParts.length === 3 && urlParts[urlParts.length - 1] === props.id.toString()) return;
 		window.history.replaceState(null, '', `${window.location.href}/${props.id.toString()}`);
 	}, [props.id]);
 
-	// Кастомный рендер для колонок клиники
 	const renderCell = (
 		item: WorkDetail,
 		column: ColumnConfig,
 		isFirstInWork: boolean,
 		totalSalary: number
-	) => {
-		switch (column.key) {
+	) =>
+	{
+		switch (column.key)
+		{
 			case 'checkbox':
 				return isFirstInWork ? (
 					<input
@@ -97,29 +115,50 @@ export default function Accounting(props: Props) {
 	};
 
 	const columns: ColumnConfig[] = [
-		{ key: 'checkbox', header: '', className: 'no-print' },
-		{ key: 'start', header: 'Дата заказ-наряда' },
-		{ key: 'patient', header: 'Ф.И.О пациента' },
-		{ key: 'name', header: 'Изделие' },
-		{ key: 'cost', header: 'Цена за ед.' },
-		{ key: 'count', header: 'Кол-во ед.' },
-		{ key: 'item_salary', header: 'Итого сумма по изделиям' },
-		{ key: 'total_salary', header: 'Сумма по заказу' },
+		{key: 'checkbox', header: '', className: 'no-print'},
+		{key: 'start', header: 'Дата заказ-наряда'},
+		{key: 'patient', header: 'Ф.И.О пациента'},
+		{key: 'name', header: 'Изделие'},
+		{key: 'cost', header: 'Цена за ед.'},
+		{key: 'count', header: 'Кол-во ед.'},
+		{key: 'item_salary', header: 'Итого сумма по изделиям'},
+		{key: 'total_salary', header: 'Сумма по заказу'},
 	];
 
 	return (
 		<WorkLayout title={`Счёт - ${props.name}`}>
 			<div className="d-flex justify-content-between no-print">
 				<Link href="/clinics" method="post" className="btn btn-link">Назад</Link>
-				<button className="btn btn-primary" onClick={handleLockAndPrint}>
-					Заблокировать выбранные и распечатать
-				</button>
-				<a className="btn btn-link" onClick={() => window.print()}>
-					Распечатать без блокировки
-				</a>
+				<div>
+					<a className="btn btn-link no-print" onClick={() => window.print()}>Распечатать без блокировки</a>
+					<button className="btn btn-primary no-print" onClick={handleLockAndPrint}>Заблокировать выбранные и распечатать</button>
+				</div>
 			</div>
 
-			<h6>Реестр выполненных работ за выбранный месяц – Клиника {props.name}</h6>
+			<div className="mb-3 mt-3 no-print">
+				<label className="me-2">Период для отображения в печати:</label>
+				<input
+					type="date"
+					value={periodFrom}
+					onChange={e => setPeriodFrom(e.target.value)}
+					className="form-control d-inline-block w-auto me-2"
+				/>
+				<span>—</span>
+				<input
+					type="date"
+					value={periodTo}
+					onChange={e => setPeriodTo(e.target.value)}
+					className="form-control d-inline-block w-auto ms-2"
+				/>
+			</div>
+
+			<h6>
+				Реестр выполненных работ
+				{periodFrom && periodTo
+					? ` за период с ${formatDate(periodFrom)} по ${formatDate(periodTo)}`
+					: ' за выбранный месяц'}
+				– Клиника {props.name}
+			</h6>
 
 			<AccountingTable
 				items={props.items}

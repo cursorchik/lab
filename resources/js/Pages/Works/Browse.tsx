@@ -386,7 +386,7 @@ export default function Browse(props: WorksProps)
 						</td>
 						<td>
                                 <span className="flex gap-1 align-items-center justify-center">
-                                    {!item.locked_both && (
+                                    {!item.locked_by_clinic && !item.locked_by_mechanic && (
 										<Link
 											className="i edit"
 											title="Редактировать"
