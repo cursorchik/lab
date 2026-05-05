@@ -10,7 +10,8 @@ class WorksTypesRequest extends FormRequest
     {
         return [
             'name' => 'required|max:255',
-            'cost' => 'required|integer|min:1'
+			'cost_clinic' => 'required|integer|min:0',
+			'cost_mechanic' => 'required|integer|min:0',
         ];
     }
 }

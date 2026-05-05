@@ -59,11 +59,11 @@ Route::prefix('works_types')->group(function ()
 {
 	Route::get('/', [WorksTypesController::class, 'index'])->name('works_types.index');
 	Route::get('/create', [WorksTypesController::class, 'create'])->name('works_types.create');
-	Route::get('/import_preview', [WorksTypesController::class, 'preview'])->name('works_types.import_preview');
+//	Route::get('/import_preview', [WorksTypesController::class, 'preview'])->name('works_types.import_preview');
 	Route::get('/edit/{id}', [WorksTypesController::class, 'edit'])->name('works_types.edit')->where('id', '[0-9]+');
 	Route::get('/destroy/{id}', [WorksTypesController::class, 'destroy'])->name('works_types.destroy')->where('id', '[0-9]+');
 
 	Route::post('/store', [WorksTypesController::class, 'store'])->name('works_types.store');
-	Route::post('/import', [WorksTypesController::class, 'import'])->name('works_types.import');
+//	Route::post('/import', [WorksTypesController::class, 'import'])->name('works_types.import');
 	Route::post('/update/{id}', [WorksTypesController::class, 'update'])->name('works_types.update')->where('id', '[0-9]+');
 });

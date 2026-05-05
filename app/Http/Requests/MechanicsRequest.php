@@ -11,11 +11,11 @@ class MechanicsRequest extends FormRequest
         return ['name' => 'required|max:255'];
     }
 
-    public function messages() : array
-    {
-        return [
-            'name.required' => 'Укажите название',
-            'name.max' => 'Название должно содержать не более :max символов'
-        ];
-    }
+//    public function messages() : array
+//    {
+//        return [
+//            'name.required' => 'Укажите название',
+//            'name.max' => 'Название должно содержать не более :max символов'
+//        ];
+//    }
 }

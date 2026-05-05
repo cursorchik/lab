@@ -63,7 +63,8 @@ type WorksTypesProps = {
 
 type WorkItem = {
     name: string;
-    cost: number;
+    cost_clinic: number;
+    cost_mechanic: number;
 }
 
 export default function Preview(props: WorksTypesProps)
@@ -91,10 +92,11 @@ export default function Preview(props: WorksTypesProps)
             if (row.trim() === '') continue;
 
             const item = row.split('\t');
-            if (item.length >= 2) {
+            if (item.length >= 3) {
                 parsedItems.push({
                     name: item[0].trim(),
-                    cost: Number(item[1])
+                    cost_clinic: Number(item[1]),
+					cost_mechanic: Number(item[2]),
                 });
             }
         }
@@ -127,8 +129,8 @@ export default function Preview(props: WorksTypesProps)
             {errors.items && (<div>{errors.items}</div>)}
             <div className="flex flex-col justify-center min-w-60 max-w-screen-md">
                 <div>
-                    <label htmlFor="raw" className="form-label">Введите данные (название и цена):</label>
-                    <textarea id="raw" className="form-control mb-3" placeholder="Работа 1 2000 &#10;Работа 2 500 &#10;..." rows={5} onChange={handleTextareaChange}/>
+                    <label htmlFor="raw" className="form-label">Введите данные (название и стоимость для клиники и стоимость для техника):</label>
+                    <textarea id="raw" className="form-control mb-3" placeholder="Коронка 2000 1500 &#10;Протез 5000 2500 &#10;..." rows={5} onChange={handleTextareaChange}/>
                 </div>
 
                 {items.length > 0 && (
@@ -138,7 +140,8 @@ export default function Preview(props: WorksTypesProps)
                             items.map((item, i) =>
                             {
                                 const ename = mapErr.get(i)?.get('name');
-                                const ecost = mapErr.get(i)?.get('cost');
+                                const error_cost_clinic = mapErr.get(i)?.get('cost_clinic');
+                                const error_cost_mechanic = mapErr.get(i)?.get('cost_mechanic');
 
                                 return <div key={i} className="border p-3 mb-3">
                                     <div className="mb-3">
@@ -147,9 +150,14 @@ export default function Preview(props: WorksTypesProps)
                                         {ename && (<div>{ename}</div>)}
                                     </div>
                                     <div className="mb-3">
-                                        <label htmlFor={`cost-${i}`} className="form-label">Цена</label>
-                                        <input className="form-control" name={'form[' + i + '][cost]'} value={item.cost} id={`cost-${i}`} type="number" readOnly/>
-                                        {ecost && (<div>{ecost}</div>)}
+                                        <label htmlFor={`cost_clinic-${i}`} className="form-label">Стоимость для клиники</label>
+                                        <input className="form-control" name={'form[' + i + '][cost_clinic]'} value={item.cost_clinic} id={`cost_clinic-${i}`} type="number" readOnly/>
+                                        {error_cost_clinic && (<div>{error_cost_clinic}</div>)}
+                                    </div>
+                                    <div className="mb-3">
+                                        <label htmlFor={`cost_mechanic-${i}`} className="form-label">Стоимость для техника</label>
+                                        <input className="form-control" name={'form[' + i + '][cost_mechanic]'} value={item.cost_mechanic} id={`cost_mechanic-${i}`} type="number" readOnly/>
+                                        {error_cost_mechanic && (<div>{error_cost_mechanic}</div>)}
                                     </div>
                                 </div>;
                             })

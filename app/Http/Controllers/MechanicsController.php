@@ -60,7 +60,7 @@ class MechanicsController extends Controller
 							->whereColumn('mechanic_work_locks.work_id', 'works.id')
 							->whereColumn('mechanic_work_locks.mechanic_id', 'works.mid');
 					})
-					->selectRaw('SUM(`work_types`.`cost` * `work_work_type`.`count`)');
+					->selectRaw('SUM(`work_types`.`cost_mechanic` * `work_work_type`.`count`)');
 			}, 'salary');
 	}
 
@@ -139,9 +139,9 @@ class MechanicsController extends Controller
 				'works.patient',
 				'works.start',
 				'work_types.name',
-				'work_types.cost',
+				'work_types.cost_mechanic',
 				'work_work_type.count',
-				DB::raw('`work_types`.`cost` * `work_work_type`.`count` as salary')
+				DB::raw('`work_types`.`cost_mechanic` * `work_work_type`.`count` as salary')
 			)
 			->get()
 			->groupBy('id');;

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Eloquent;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Carbon;
 use Database\Factories\WorkTypeFactory;
 
@@ -16,7 +17,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property string $name
- * @property float $cost
+ * @property float                      $cost
  * @method static WorkTypeFactory factory($count = null, $state = [])
  * @method static Builder<static>|WorkType newModelQuery()
  * @method static Builder<static>|WorkType newQuery()
@@ -26,8 +27,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  * @method static Builder<static>|WorkType whereId($value)
  * @method static Builder<static>|WorkType whereName($value)
  * @method static Builder<static>|WorkType whereUpdatedAt($value)
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Work> $works
- * @property-read int|null $works_count
+ * @property-read Collection<int, Work> $works
+ * @property-read int|null              $works_count
  * @mixin Eloquent
  */
 class WorkType extends Model
@@ -35,7 +36,7 @@ class WorkType extends Model
     /** @use HasFactory<WorkTypeFactory> */
     use HasFactory;
 
-    protected $fillable = ['name', 'cost'];
+	protected $fillable = ['name', 'cost_clinic', 'cost_mechanic'];
 
 	public function works() : BelongsToMany
 	{

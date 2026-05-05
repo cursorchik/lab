@@ -16,14 +16,15 @@ class WorkFactory extends Factory
 	public function definition() : array
 	{
 		return [
-			'start'   => $this->faker->date(),
-			'end'     => $this->faker->optional()->date(),
-			'state'   => $this->faker->numberBetween(0, 3),
-			'mid'     => Mechanic::inRandomOrder()->first()->id ?? Mechanic::factory(),
-			'cid'     => Clinic::inRandomOrder()->first()->id ?? Clinic::factory(),
-			'comment' => $this->faker->sentence(),
-			'patient' => $this->faker->name(),
-			'cost'    => 0,
+			'start'   			=> $this->faker->date(),
+			'end'     			=> $this->faker->optional()->date(),
+			'state'   			=> $this->faker->numberBetween(0, 3),
+			'mid'     			=> Mechanic::inRandomOrder()->first()->id ?? Mechanic::factory(),
+			'cid'     			=> Clinic::inRandomOrder()->first()->id ?? Clinic::factory(),
+			'comment' 			=> $this->faker->sentence(),
+			'patient' 			=> $this->faker->name(),
+			'cost_clinic'		=> 0,
+			'cost_mechanic'		=> 0,
 		];
 	}
 
@@ -37,9 +38,18 @@ class WorkFactory extends Factory
 				$work->workTypes()->attach($type->id, ['count' => rand(1, 5)]);
 			}
 
-			$work->load('workTypes');
-			$total = $work->workTypes->sum(fn($t) => $t->cost * $t->pivot->count);
-			$work->update(['cost' => $total]);
+			$totalClinic = 0;
+			$totalMechanic = 0;
+
+			foreach ($work->workTypes as $type)
+			{
+				$totalClinic += $type->cost_clinic * $type->pivot->count;
+				$totalMechanic += $type->cost_mechanic * $type->pivot->count;
+			}
+			$work->update([
+				'cost_clinic' => $totalClinic,
+				'cost_mechanic' => $totalMechanic,
+			]);
 		});
 	}
 }

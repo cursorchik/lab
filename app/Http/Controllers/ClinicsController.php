@@ -38,7 +38,7 @@ class ClinicsController extends Controller
 							->whereColumn('clinic_work_locks.work_id', 'works.id')
 							->whereColumn('clinic_work_locks.clinic_id', 'works.cid');
 					})
-					->selectRaw('SUM(`work_types`.`cost` * `work_work_type`.`count`)');
+					->selectRaw('SUM(`work_types`.`cost_clinic` * `work_work_type`.`count`)');
 			}, 'salary');
 	}
 
@@ -117,9 +117,9 @@ class ClinicsController extends Controller
 				'works.start',
 				'works.patient',
 				'work_types.name',
-				'work_types.cost',
+				'work_types.cost_clinic',
 				'work_work_type.count',
-				DB::raw('`work_types`.`cost` * `work_work_type`.`count` as salary')
+				DB::raw('`work_types`.`cost_clinic` * `work_work_type`.`count` as salary')
 			)
 			->get()
 			->groupBy('id');

@@ -15,7 +15,7 @@ type Props = {
 export default function Browse(props: Props)
 {
     return (<TableBrowse title="Список техников" urls={{add: '/mechanics/create'}}>
-        <table className="table">
+        <table className="table text-sm">
             <thead>
             <tr>
                 <th className="col">ID</th>

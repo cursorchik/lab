@@ -35,18 +35,22 @@ class WorksTypesController extends Controller
     public function import(Request $request) : RedirectResponse
     {
         $validator = Validator::make($request->all(), [
-            'form'          => 'required|array|min:1',
-            'form.*.name'   => 'required|string|max:255',
-            'form.*.cost'   => 'required|integer|min:1',
+            'form'          		=> 'required|array|min:1',
+            'form.*.name'   		=> 'required|string|max:255',
+            'form.*.cost_clinic'   	=> 'required|integer|min:1',
+            'form.*.cost_mechanic'  => 'required|integer|min:1',
         ], [
             'form.required'         => 'Необходимо добавить хотя бы один элемент',
             'form.array'            => 'Данные должны быть массивом',
             'form.min'              => 'Необходимо добавить хотя бы один элемент',
             'form.*.name.required'  => 'Название работы обязательно для заполнения',
             'form.*.name.max'       => 'Название работы не должно превышать :max символов',
-            'form.*.cost.required'  => 'Цена обязательна для заполнения',
-            'form.*.cost.integer'   => 'Цена должна быть числом',
-            'form.*.cost.min'       => 'Цена не может быть менее :min',
+            'form.*.cost_clinic.required'  => 'Стоимоть для клиники обязательна для заполнения',
+            'form.*.cost_clinic.integer'   => 'Стоимоть для клиники должна быть числом',
+            'form.*.cost_clinic.min'       => 'Стоимоть для клиники не может быть менее :min',
+            'form.*.cost_mechanic.required'  => 'Стоимоть для техника обязательна для заполнения',
+            'form.*.cost_mechanic.integer'   => 'Стоимоть для техника должна быть числом',
+            'form.*.cost_mechanic.min'       => 'Стоимоть для техника не может быть менее :min',
         ]);
 
         if ($validator->fails()) {

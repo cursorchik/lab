@@ -40,11 +40,13 @@ export default function Create(props: WorksProps)
 						<input
 							id="start"
 							type="date"
+							min="1900-01-01"
+							max="2100-12-31"
 							value={data.start}
 							className="form-control"
 							onChange={e => setData('start', e.target.value)}
 						/>
-						<ErrorHint text={page_errors?.start} />
+						<ErrorHint text={errors?.start ?? ''} />
 					</div>
 
 					<div className="mb-3">
@@ -52,11 +54,13 @@ export default function Create(props: WorksProps)
 						<input
 							id="end"
 							type="date"
+							min="1900-01-01"
+							max="2100-12-31"
 							value={data.end}
 							className="form-control"
 							onChange={e => setData('end', e.target.value)}
 						/>
-						<ErrorHint text={page_errors?.end} />
+						<ErrorHint text={errors?.end ?? ''} />
 					</div>
 
 					<div className="mb-3">
@@ -71,7 +75,7 @@ export default function Create(props: WorksProps)
 							className="form-control"
 							onChange={e => setData('patient', e.target.value)}
 						/>
-						<ErrorHint text={page_errors?.patient} />
+						<ErrorHint text={errors?.patient ?? ''} />
 					</div>
 
 					<div className="mb-3">
@@ -82,7 +86,7 @@ export default function Create(props: WorksProps)
 							onChange={(val) => setData('works', val)}
 							placeholder="Выберите тип работ(ы)"
 						/>
-						<ErrorHint text={page_errors?.works} />
+						<ErrorHint text={errors?.works ?? ''} />
 					</div>
 
 					<div className="mb-3">
@@ -96,7 +100,7 @@ export default function Create(props: WorksProps)
 							<option value="0">Не указано</option>
 							{props.clinics?.map(item => (<option key={item.id} value={item.id}>{item.name}</option>))}
 						</select>
-						<ErrorHint text={page_errors?.cid} />
+						<ErrorHint text={errors?.cid ?? ''} />
 					</div>
 
 					<div className="mb-3">
@@ -110,7 +114,7 @@ export default function Create(props: WorksProps)
 							<option value="0">Не указано</option>
 							{props.mechanics?.map(item => (<option key={item.id} value={item.id}>{item.name}</option>))}
 						</select>
-						<ErrorHint text={page_errors?.mid} />
+						<ErrorHint text={errors?.mid ?? ''} />
 					</div>
 
 					<div className="mb-3">
@@ -121,7 +125,7 @@ export default function Create(props: WorksProps)
 							className="form-control"
 							onChange={e => setData('comment', e.target.value)}
 						/>
-						<ErrorHint text={page_errors?.comment} />
+						<ErrorHint text={errors?.comment ?? ''} />
 					</div>
 
 					<button className="btn btn-primary" type="submit" disabled={processing}>Добавить</button>

@@ -62,16 +62,17 @@ class Work extends Model implements IWork
     /** @use HasFactory<WorkFactory> */
     use HasFactory;
 
-    protected $fillable = [
-        'start',
-        'end',
-        'state',
-        'mid',
-        'cid',
-        'comment',
-        'patient',
-        'cost',
-    ];
+	protected $fillable = [
+		'start',
+		'end',
+		'state',
+		'mid',
+		'cid',
+		'comment',
+		'patient',
+		'cost_clinic',
+		'cost_mechanic',
+	];
 
 	public function isLockedForClinic() : bool
 	{

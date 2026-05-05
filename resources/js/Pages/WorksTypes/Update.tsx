@@ -5,7 +5,7 @@ import ErrorHint from '@/Components/custom/Error'
 
 type WorksTypesProps = {
     prev_url: string
-    item: { id: number, name: string, cost: number }
+    item: { id: number, name: string, cost_clinic: number, cost_mechanic: number }
 }
 
 export default function Update(props: WorksTypesProps)
@@ -22,10 +22,16 @@ export default function Update(props: WorksTypesProps)
                     <textarea className="form-control" name="name" id="name" defaultValue={props.item.name}/>
 					<ErrorHint text={errors.name}/>
                 </div>
+
                 <div className="mb-3">
-                    <label htmlFor="cost" className="form-label">Стоимость</label>
-                    <input type="number" defaultValue={props.item.cost} className="form-control" id="cost" name="cost"/>
-					<ErrorHint text={errors.cost}/>
+                    <label htmlFor="cost_clinic" className="form-label">Стоимость для клиники</label>
+                    <input type="number" defaultValue={props.item.cost_clinic} className="form-control" id="cost_clinic" name="cost_clinic"/>
+					<ErrorHint text={errors.cost_clinic}/>
+                </div>
+                <div className="mb-3">
+                    <label htmlFor="cost_mechanic" className="form-label">Стоимость для техника</label>
+                    <input type="number" defaultValue={props.item.cost_mechanic} className="form-control" id="cost_mechanic" name="cost_mechanic"/>
+					<ErrorHint text={errors.cost_mechanic}/>
                 </div>
 
                 <button className="btn btn-primary" type="submit">Применить</button>
