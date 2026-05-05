@@ -47,7 +47,7 @@ export const AccountingTable: React.FC<AccountingTableProps> = ({items, allSelec
 			case 'name'		: return item.name;
 			case 'cost'		: return formatMoney(item.cost);
 			case 'count'	: return item.count;
-			case 'salary'	: return item.salary;
+			case 'salary'	: return formatMoney(item.salary);
 			default         : return '';
 		}
 	};
@@ -88,7 +88,7 @@ export const AccountingTable: React.FC<AccountingTableProps> = ({items, allSelec
 					<tr style={{fontWeight: 'bold', borderTop: '2px solid #dee2e6'}}>
 						<td colSpan={columns.length - 2} className="text-end">Итого:</td>
 						<td>{totalCount}</td>
-						<td>{totalAmount}</td>
+						<td>{formatMoney(totalAmount)}</td>
 					</tr>
 				</tfoot>
 			)}

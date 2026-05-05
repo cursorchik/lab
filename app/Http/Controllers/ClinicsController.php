@@ -25,7 +25,7 @@ class ClinicsController extends Controller
 	protected function collectBuilderIndex() :  Builder
 	{
 		return DB::table('clinics')
-			->select('clinics.*')
+			->select(['clinics.id', 'clinics.name'])
 			->selectSub(function ($sub) {
 				$sub->from('works')
 					->join('work_work_type', 'works.id', '=', 'work_work_type.work_id')

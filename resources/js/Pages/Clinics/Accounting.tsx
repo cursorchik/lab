@@ -90,8 +90,8 @@ export default function Accounting(props: Props)
 			case 'name'			: return item.name;
 			case 'cost'			: return formatMoney(item.cost);
 			case 'count'		: return item.count;
-			case 'item_salary'	: return item.salary;
-			case 'total_salary'	: return isFirstInWork ? totalSalary : '';
+			case 'item_salary'	: return formatMoney(item.salary)
+			case 'total_salary'	: return isFirstInWork ? formatMoney(totalSalary) : '';
 			default				: return '';
 		}
 	};

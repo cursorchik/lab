@@ -47,7 +47,7 @@ class MechanicsController extends Controller
 	public function collectBuilderIndex() : Builder
 	{
 		return DB::table('mechanics')
-			->select('mechanics.*')
+			->select(['mechanics.id', 'mechanics.name'])
 			->selectSub(function ($sub) {
 				$sub->from('works')
 					->join('work_work_type', 'works.id', '=', 'work_work_type.work_id')
