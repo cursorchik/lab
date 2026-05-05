@@ -78,39 +78,21 @@ export default function Accounting(props: Props)
 		window.history.replaceState(null, '', `${window.location.href}/${props.id.toString()}`);
 	}, [props.id]);
 
-	const renderCell = (
-		item: WorkDetail,
-		column: ColumnConfig,
-		isFirstInWork: boolean,
-		totalSalary: number
-	) =>
+	const formatMoney = (amount: number) : string => amount.toLocaleString('ru-RU');
+
+	const renderCell = (item: WorkDetail, column: ColumnConfig, isFirstInWork: boolean, totalSalary: number) =>
 	{
 		switch (column.key)
 		{
-			case 'checkbox':
-				return isFirstInWork ? (
-					<input
-						type="checkbox"
-						checked={isWorkSelected(item.id)}
-						onChange={() => handleSelectWork(item.id)}
-					/>
-				) : null;
-			case 'start':
-				return isFirstInWork ? item.start : '';
-			case 'patient':
-				return isFirstInWork ? item.patient : '';
-			case 'name':
-				return item.name;
-			case 'cost':
-				return item.cost;
-			case 'count':
-				return item.count;
-			case 'item_salary':
-				return item.salary;
-			case 'total_salary':
-				return isFirstInWork ? totalSalary : '';
-			default:
-				return '';
+			case 'checkbox'		: return isFirstInWork ? (<input type="checkbox" checked={isWorkSelected(item.id)} onChange={() => handleSelectWork(item.id)}/>) : null;
+			case 'start'		: return isFirstInWork ? item.start : '';
+			case 'patient'		: return isFirstInWork ? item.patient : '';
+			case 'name'			: return item.name;
+			case 'cost'			: return formatMoney(item.cost);
+			case 'count'		: return item.count;
+			case 'item_salary'	: return item.salary;
+			case 'total_salary'	: return isFirstInWork ? totalSalary : '';
+			default				: return '';
 		}
 	};
 
@@ -156,7 +138,7 @@ export default function Accounting(props: Props)
 				Реестр выполненных работ
 				{periodFrom && periodTo
 					? ` за период с ${formatDate(periodFrom)} по ${formatDate(periodTo)}`
-					: ' за выбранный месяц'}
+					: ' '}
 				– Клиника {props.name}
 			</h6>
 

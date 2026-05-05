@@ -117,7 +117,7 @@ class ClinicsController extends Controller
 				'works.start',
 				'works.patient',
 				'work_types.name',
-				'work_types.cost_clinic',
+				'work_types.cost_clinic as cost',
 				'work_work_type.count',
 				DB::raw('`work_types`.`cost_clinic` * `work_work_type`.`count` as salary')
 			)

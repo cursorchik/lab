@@ -120,7 +120,7 @@ export default function Accounting(props: Props)
 				Зарплатная ведомость
 				{periodFrom && periodTo
 					? ` за период с ${formatDate(periodFrom)} по ${formatDate(periodTo)}`
-					: ' за выбранный месяц'}
+					: ' '}
 				– Техник {props.name}
 			</h6>
 
@@ -137,6 +137,10 @@ export default function Accounting(props: Props)
 
 			<style>{`
                 @media print {
+					.table {
+						font-size: 0.75rem;
+    					line-height: 1rem;
+					}
                     .no-print {
                         display: none;
                     }

@@ -139,7 +139,7 @@ class MechanicsController extends Controller
 				'works.patient',
 				'works.start',
 				'work_types.name',
-				'work_types.cost_mechanic',
+				'work_types.cost_mechanic as cost',
 				'work_work_type.count',
 				DB::raw('`work_types`.`cost_mechanic` * `work_work_type`.`count` as salary')
 			)

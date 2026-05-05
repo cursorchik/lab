@@ -14,6 +14,8 @@ type Props = {
 
 export default function Browse(props: Props)
 {
+	const formatMoney = (amount: number) : string => amount.toLocaleString('ru-RU');
+
     return (<TableBrowse title="Список техников" urls={{add: '/mechanics/create'}}>
         <table className="table text-sm">
             <thead>
@@ -31,7 +33,7 @@ export default function Browse(props: Props)
                     <td>{item.id}</td>
                     <td>{item.created_at}<br/>{item.updated_at}</td>
                     <td>{item.name}</td>
-                    <td>{item.salary ?? 0}</td>
+                    <td>{formatMoney(item.salary ?? 0)}</td>
                     <td className="text-center">
                         <span className="flex gap-1 align-items-center justify-center">
                             <Link type="link" className="i invoice" method="post" title="Выставить счёт" href={"/mechanics/invoice"} data={{id: item.id}} />

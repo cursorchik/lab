@@ -3,6 +3,8 @@ import WorkLayout from "@/Layouts/work/WorkLayout";
 import TableBrowse from "@/Components/custom/Table";
 export default function Browse(props: { prev_url: string, items: {id: number, name: string, cost_clinic: number, cost_mechanic: number }[] })
 {
+	const formatMoney = (amount: number) : string => amount.toLocaleString('ru-RU');
+
     return (<TableBrowse title="Список видов работ" urls={{prev: props.prev_url, add: '/works_types/create'}}>
         <table className="table text-sm">
             <thead>
@@ -18,7 +20,7 @@ export default function Browse(props: { prev_url: string, items: {id: number, na
                 props?.items?.map(item => <tr key={item.id}>
                     <td>{item.id}</td>
                     <td>{item.name}</td>
-                    <td>{item.cost_clinic} / {item.cost_mechanic}</td>
+                    <td>{formatMoney(item.cost_clinic)} / {formatMoney(item.cost_mechanic)}</td>
                     <td>
                         <span className="flex gap-1 align-items-center justify-center">
                             <Link className="i edit" title="Редактировать" href={'/works_types/edit/' + item.id}></Link>

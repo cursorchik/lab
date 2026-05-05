@@ -35,7 +35,8 @@ type WorkItem = {
 	work_types: {
 		id: number;
 		name: string;
-		cost: number;
+		cost_clinic: number;
+		cost_mechanic: number;
 		pivot: { work_id: number; work_type_id: number; count: number };
 	}[];
 	comment: string;
@@ -151,6 +152,8 @@ export default function Browse(props: WorksProps)
 			onSuccess: () => setFilterModal(false),
 		});
 	};
+
+	const formatMoney = (amount: number) : string => amount.toLocaleString('ru-RU');
 
 	return (
 		<TableBrowse urls={{add: '/works/create'}} title="Список работ">
@@ -276,17 +279,14 @@ export default function Browse(props: WorksProps)
 						</Link>
 					</th>
 					<th className="col">Статус</th>
-					<th className="col">
+					<th className="col whitespace-nowrap">
 						<Link href={getSortLink('start')} className="whitespace-nowrap text-decoration-none" title={direction === 'asc' ? 'Сортировка по возрастанию' : 'Сортировка по убыванию'} preserveState>
-							Начало работы {sort === 'start' && (direction === 'asc' ? '▲' : '▼')}
+							Начало {sort === 'start' && (direction === 'asc' ? '▲' : '▼')}
+						</Link> - <Link href={getSortLink('end')} className="whitespace-nowrap text-decoration-none" title={direction === 'asc' ? 'Сортировка по возрастанию' : 'Сортировка по убыванию'} preserveState>
+							Сдача {sort === 'end' && (direction === 'asc' ? '▲' : '▼')}
 						</Link>
 					</th>
-					<th className="col">
-						<Link href={getSortLink('end')} className="whitespace-nowrap text-decoration-none" title={direction === 'asc' ? 'Сортировка по возрастанию' : 'Сортировка по убыванию'} preserveState>
-							Сдача работы {sort === 'end' && (direction === 'asc' ? '▲' : '▼')}
-						</Link>
-					</th>
-					<th className="col">ФИО пациента</th>
+					<th className="col">Пациент</th>
 					<th className="col">Клиника</th>
 					<th className="col">Техник</th>
 					<th className="col">Блокировка</th>
@@ -299,8 +299,7 @@ export default function Browse(props: WorksProps)
 					<tr key={item.id}>
 						<td>{item.id}</td>
 						<td>{STATES[item.state] ?? 'UNKNOWN'}</td>
-						<td>{item.start ?? 'UNKNOWN'}</td>
-						<td>{item.end ?? 'UNKNOWN'}</td>
+						<td>{item.start ?? 'UNKNOWN'} - {item.end ?? 'UNKNOWN'}</td>
 						<td>{item.patient ?? 'UNKNOWN'}</td>
 						<td>{item.clinic?.name ?? 'UNKNOWN'}</td>
 						<td>{item.mechanic?.name ?? 'UNKNOWN'}</td>
@@ -308,7 +307,10 @@ export default function Browse(props: WorksProps)
 						<td>
 							<ul className="mb-0">
 								{item.work_types.map((type) => (
-									<li key={type.id}>
+									<li key={type.id} title={`
+Заработает клиника (${formatMoney(type.pivot?.count * type.cost_clinic)})
+Заработает техник (${formatMoney(type.pivot?.count * type.cost_mechanic)})
+									`}>
 										{type.name} {type.pivot?.count ? `(x${type.pivot.count})` : ''}
 									</li>
 								))}
